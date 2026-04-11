@@ -20,7 +20,7 @@ type ChartData = {
   quarterly: QuarterlyComplaints[];
   weekly: WeeklyChannel[];
 };
-`
+
 type ChatResponse = {
   summary: string;
   data_source: string;
@@ -44,7 +44,10 @@ type ProfilingEvent = {
 };
 
 type SchemaPayload = {
-  tables?: Record<string, { row_count?: number; columns?: Record<string, { inferred_type?: string }> }>;
+  tables?: Record<
+    string,
+    { row_count?: number; columns?: Record<string, { inferred_type?: string }> }
+  >;
 };
 
 const initialData: ChartData = {
@@ -112,9 +115,13 @@ export default function Home() {
       };
 
       const [monthlyText, quarterlyText, weeklyText] = await Promise.all([
-        fetch("/validation/story1_monthly_revenue.csv").then((res) => res.text()),
+        fetch("/validation/story1_monthly_revenue.csv").then((res) =>
+          res.text(),
+        ),
         fetch("/validation/story2_complaints_q2.csv").then((res) => res.text()),
-        fetch("/validation/story3_week8_channel_drop.csv").then((res) => res.text()),
+        fetch("/validation/story3_week8_channel_drop.csv").then((res) =>
+          res.text(),
+        ),
       ]);
 
       try {
@@ -149,7 +156,10 @@ export default function Home() {
   }, []);
 
   const weeklySeries = useMemo(() => {
-    const grouped: Record<number, { week: number; Digital?: number; Branch?: number }> = {};
+    const grouped: Record<
+      number,
+      { week: number; Digital?: number; Branch?: number }
+    > = {};
     data.weekly.forEach((row) => {
       if (!grouped[row.week_of_year]) {
         grouped[row.week_of_year] = { week: row.week_of_year };
@@ -172,16 +182,22 @@ export default function Home() {
             <div className="kicker">Profiling Dataset</div>
             <h2>Learning your dataset in real time</h2>
             <p>
-              We are scanning every CSV to understand columns, types, and dimensions. This only
-              happens on the first run.
+              We are scanning every CSV to understand columns, types, and
+              dimensions. This only happens on the first run.
             </p>
             <div className="progress-grid">
-              {profilingEvents.length === 0 && <div className="progress-row">Waiting for data...</div>}
+              {profilingEvents.length === 0 && (
+                <div className="progress-row">Waiting for data...</div>
+              )}
               {profilingEvents.map((event, index) => (
-                <div key={`${event.table ?? "event"}-${index}`} className="progress-row">
+                <div
+                  key={`${event.table ?? "event"}-${index}`}
+                  className="progress-row"
+                >
                   <span>{event.file || event.table || "Profiler"}</span>
                   <span className="muted">
-                    {event.status} {event.rows_scanned ? `• ${event.rows_scanned} rows` : ""}
+                    {event.status}{" "}
+                    {event.rows_scanned ? `• ${event.rows_scanned} rows` : ""}
                   </span>
                 </div>
               ))}
@@ -208,8 +224,8 @@ export default function Home() {
         <div className="kicker">Talk to Data / Validation View</div>
         <h1>Story signals baked into the dataset</h1>
         <p>
-          These charts are loaded straight from the validation CSVs. Use them to confirm the
-          anomalies that will guide the evaluator.
+          These charts are loaded straight from the validation CSVs. Use them to
+          confirm the anomalies that will guide the evaluator.
         </p>
       </section>
 
@@ -217,7 +233,9 @@ export default function Home() {
         <article className="card">
           <span className="callout">Story 1</span>
           <h3>March revenue dip</h3>
-          <p className="hint">Something shifted in March. Ask why revenue fell.</p>
+          <p className="hint">
+            Something shifted in March. Ask why revenue fell.
+          </p>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.monthly}>
@@ -225,7 +243,12 @@ export default function Home() {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="amount" stroke="#0b3d91" strokeWidth={3} />
+                <Line
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#0b3d91"
+                  strokeWidth={3}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -234,7 +257,9 @@ export default function Home() {
         <article className="card">
           <span className="callout">Story 2</span>
           <h3>Q2 complaints surge</h3>
-          <p className="hint">Q2 jumps hard. Ask what segment and channel drove it.</p>
+          <p className="hint">
+            Q2 jumps hard. Ask what segment and channel drove it.
+          </p>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.quarterly}>
@@ -251,7 +276,9 @@ export default function Home() {
         <article className="card">
           <span className="callout">Story 3</span>
           <h3>Week 8 digital drop</h3>
-          <p className="hint">Digital falls in week 8. Watch Branch compensate.</p>
+          <p className="hint">
+            Digital falls in week 8. Watch Branch compensate.
+          </p>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklySeries}>
@@ -259,8 +286,18 @@ export default function Home() {
                 <XAxis dataKey="week" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="Digital" stroke="#0b3d91" strokeWidth={3} />
-                <Line type="monotone" dataKey="Branch" stroke="#d09b2c" strokeWidth={3} />
+                <Line
+                  type="monotone"
+                  dataKey="Digital"
+                  stroke="#0b3d91"
+                  strokeWidth={3}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Branch"
+                  stroke="#d09b2c"
+                  strokeWidth={3}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -285,7 +322,9 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <div className="chat-message">Ask a question to see a structured response.</div>
+            <div className="chat-message">
+              Ask a question to see a structured response.
+            </div>
           )}
         </div>
         {chatResponse?.chart?.data?.length ? (
@@ -309,7 +348,8 @@ export default function Home() {
                   <XAxis dataKey={chatResponse.chart.xKey || "label"} />
                   <YAxis />
                   <Tooltip />
-                  {chatResponse.chart.series && chatResponse.chart.series.length ? (
+                  {chatResponse.chart.series &&
+                  chatResponse.chart.series.length ? (
                     chatResponse.chart.series.map((series) => (
                       <Line
                         key={series.key}
@@ -394,7 +434,9 @@ export default function Home() {
                       .map(([colName, col]) => (
                         <div key={colName} className="schema-chip">
                           {colName}
-                          <span className="muted">{col.inferred_type || "unknown"}</span>
+                          <span className="muted">
+                            {col.inferred_type || "unknown"}
+                          </span>
                         </div>
                       ))}
                 </div>
