@@ -1,10 +1,10 @@
 {
-  "dataset_fingerprint": "91023f0acdca7bfb8e555c24345e860da5a680b033de4b956325585d159a36a9",
-  "generated_at": "2026-04-11T09:19:44.296240Z",
+  "dataset_fingerprint": "25204cae22da46cf1b1407ce726db3b8a64dd47dbae6fa389810561a9265ea16",
+  "generated_at": "2026-04-11T09:43:26.122022Z",
   "tables": {
     "complaints": {
       "name": "complaints",
-      "file_path": "c:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\complaints.csv",
+      "file_path": "C:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\complaints.csv",
       "row_count": 2959,
       "inferred_time_column": "date",
       "measures": [
@@ -203,7 +203,7 @@
     },
     "customers": {
       "name": "customers",
-      "file_path": "c:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\customers.csv",
+      "file_path": "C:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\customers.csv",
       "row_count": 8000,
       "inferred_time_column": "join_date",
       "measures": [],
@@ -330,7 +330,7 @@
     },
     "support_tickets": {
       "name": "support_tickets",
-      "file_path": "c:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\support_tickets.csv",
+      "file_path": "C:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\support_tickets.csv",
       "row_count": 4000,
       "inferred_time_column": "date",
       "measures": [
@@ -540,7 +540,7 @@
     },
     "transactions": {
       "name": "transactions",
-      "file_path": "c:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\transactions.csv",
+      "file_path": "C:\\Users\\nisha\\Downloads\\NatWest\\Natwest-talk_to_data\\data\\transactions.csv",
       "row_count": 58871,
       "inferred_time_column": "date",
       "measures": [

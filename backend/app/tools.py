@@ -71,10 +71,24 @@ def find_drivers(
 ) -> Dict[str, object]:
     table_profile = _get_table_profile(schema, table)
     dimensions = table_profile.get("dimensions", [])
-    if not dimensions:
+    id_columns = set(table_profile.get("id_columns", []))
+    columns = table_profile.get("columns", {})
+    preferred_dimensions = []
+    for dimension in dimensions:
+        if dimension in id_columns:
+            continue
+        column_profile = columns.get(dimension, {}) if isinstance(columns, dict) else {}
+        if column_profile.get("high_cardinality"):
+            continue
+        preferred_dimensions.append(dimension)
+
+    if not preferred_dimensions and dimensions:
+        preferred_dimensions = [dimension for dimension in dimensions if dimension not in id_columns]
+
+    if not preferred_dimensions:
         return {"drivers": [], "dimension": None}
 
-    dimension = dimensions[0]
+    dimension = preferred_dimensions[0]
     logger = get_logger("talk_to_data.tools")
     grouped = aggregate(adapter, table, metric, dimension, operation, date_range)
     logger.info("find_drivers dimension=%s", dimension)

@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from app.adapters.csv_adapter import CSVAdapter
+from app.contracts import ChatResponse
 from app.profiling.profiler import load_profile, profile_dataset
 from app.agent import run_agent
 from app.state import profiling_state
@@ -31,8 +32,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[frontend_origin],
     allow_credentials=True,
-    allow_methods=["*"] ,
-    allow_headers=["*"] ,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -128,51 +129,69 @@ def chat(payload: Dict[str, object]) -> Dict[str, object]:
         }
     try:
         schema = adapter.schema()
-        return run_agent(adapter, question, schema)
+        response = run_agent(adapter, question, schema)
+        return ChatResponse.model_validate(response).model_dump()
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        logger.exception("chat_request_failed")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @app.post("/tools/filter")
 def tool_filter(payload: Dict[str, object]) -> Dict[str, object]:
     logger.info("tool_filter")
-    table = str(payload.get("table"))
-    filters = payload.get("filters", {})
-    date_range = payload.get("date_range")
-    data = filter_data(adapter, table, filters, date_range)
-    return {"rows": data}
+    try:
+        table = str(payload.get("table"))
+        filters = payload.get("filters", {})
+        date_range = payload.get("date_range")
+        data = filter_data(adapter, table, filters, date_range)
+        return {"rows": data}
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("tool_filter_failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/tools/aggregate")
 def tool_aggregate(payload: Dict[str, object]) -> Dict[str, object]:
     logger.info("tool_aggregate")
-    table = str(payload.get("table"))
-    metric = str(payload.get("metric"))
-    group_by = payload.get("group_by")
-    operation = str(payload.get("operation", "sum"))
-    date_range = payload.get("date_range")
-    data = aggregate(adapter, table, metric, group_by, operation, date_range)
-    return {"rows": data}
+    try:
+        table = str(payload.get("table"))
+        metric = str(payload.get("metric"))
+        group_by = payload.get("group_by")
+        operation = str(payload.get("operation", "sum"))
+        date_range = payload.get("date_range")
+        data = aggregate(adapter, table, metric, group_by, operation, date_range)
+        return {"rows": data}
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("tool_aggregate_failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/tools/compare")
 def tool_compare(payload: Dict[str, object]) -> Dict[str, object]:
     logger.info("tool_compare")
-    table = str(payload.get("table"))
-    metric = str(payload.get("metric"))
-    operation = str(payload.get("operation", "sum"))
-    period_a = payload.get("period_a", {})
-    period_b = payload.get("period_b", {})
-    return compare(adapter, table, metric, operation, period_a, period_b)
+    try:
+        table = str(payload.get("table"))
+        metric = str(payload.get("metric"))
+        operation = str(payload.get("operation", "sum"))
+        period_a = payload.get("period_a", {})
+        period_b = payload.get("period_b", {})
+        return compare(adapter, table, metric, operation, period_a, period_b)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("tool_compare_failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/tools/find_drivers")
 def tool_find_drivers(payload: Dict[str, object]) -> Dict[str, object]:
     logger.info("tool_find_drivers")
-    table = str(payload.get("table"))
-    metric = str(payload.get("metric"))
-    operation = str(payload.get("operation", "sum"))
-    date_range = payload.get("date_range")
-    limit = int(payload.get("limit", 5))
-    schema = adapter.schema()
-    return find_drivers(adapter, table, metric, operation, date_range, schema, limit)
+    try:
+        table = str(payload.get("table"))
+        metric = str(payload.get("metric"))
+        operation = str(payload.get("operation", "sum"))
+        date_range = payload.get("date_range")
+        limit = int(payload.get("limit", 5))
+        schema = adapter.schema()
+        return find_drivers(adapter, table, metric, operation, date_range, schema, limit)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("tool_find_drivers_failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

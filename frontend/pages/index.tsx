@@ -34,6 +34,11 @@ type ChatResponse = {
   confidence: string;
 };
 
+type ApiErrorPayload = {
+  detail?: string;
+  message?: string;
+};
+
 type ProfilingEvent = {
   status?: string;
   table?: string;
@@ -81,6 +86,19 @@ export default function Home() {
   const [schema, setSchema] = useState<SchemaPayload | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  async function readApiError(response: Response): Promise<string> {
+    try {
+      const payload = (await response.json()) as ApiErrorPayload;
+      return (
+        payload.detail ||
+        payload.message ||
+        `Request failed (${response.status})`
+      );
+    } catch {
+      return `Request failed (${response.status})`;
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -317,6 +335,12 @@ export default function Home() {
             <div className="chat-message">
               <strong>Summary:</strong> {chatResponse.summary}
               <div className="muted">Confidence: {chatResponse.confidence}</div>
+              {(chatResponse.confidence || "").toLowerCase() === "low" && (
+                <div className="chat-error">
+                  Low-confidence answer. Try narrowing the question by table,
+                  metric, and time period.
+                </div>
+              )}
               {chatResponse.data_source && (
                 <div className="muted">Source: {chatResponse.data_source}</div>
               )}
@@ -389,17 +413,22 @@ export default function Home() {
                 const response = await fetch(`${apiBase}/chat`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ question }),
+                  body: JSON.stringify({ question: question.trim() }),
                 });
                 if (!response.ok) {
-                  const payload = await response.json();
-                  throw new Error(payload?.message || "Agent request failed");
+                  throw new Error(await readApiError(response));
                 }
                 const payload = (await response.json()) as ChatResponse;
                 if (!payload?.summary) {
                   throw new Error("Agent response was incomplete.");
                 }
                 setChatResponse(payload);
+              } catch (error) {
+                const message =
+                  error instanceof Error
+                    ? error.message
+                    : "Could not reach the data agent right now.";
+                setChatError(message);
               } finally {
                 setChatLoading(false);
               }

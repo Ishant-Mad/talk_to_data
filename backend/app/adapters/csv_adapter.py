@@ -31,6 +31,8 @@ class CSVAdapter(DataAdapter):
         frame = self._load_table(table)
         result = frame
 
+        self._require_columns(frame, table, filters.keys())
+
         for column, value in filters.items():
             result = result[result[column] == value]
 
@@ -55,6 +57,10 @@ class CSVAdapter(DataAdapter):
         date_range: Optional[Dict[str, str]] = None,
     ) -> List[Dict[str, object]]:
         frame = self._load_table(table)
+        self._require_columns(frame, table, [metric])
+        if group_by:
+            self._require_columns(frame, table, [group_by])
+
         if date_range:
             date_col = self._infer_time_column(table)
             if date_col:
@@ -83,6 +89,7 @@ class CSVAdapter(DataAdapter):
 
     def distinct(self, table: str, column: str) -> List[str]:
         frame = self._load_table(table)
+        self._require_columns(frame, table, [column])
         return frame[column].dropna().astype(str).unique().tolist()
 
     def _load_table(self, table: str) -> pd.DataFrame:
@@ -97,3 +104,9 @@ class CSVAdapter(DataAdapter):
             return None
         table_profile = profile.get("tables", {}).get(table, {})
         return table_profile.get("inferred_time_column")
+
+    @staticmethod
+    def _require_columns(frame: pd.DataFrame, table: str, columns: List[str]) -> None:
+        missing = [column for column in columns if column not in frame.columns]
+        if missing:
+            raise ValueError(f"Table '{table}' is missing required columns: {', '.join(missing)}")
