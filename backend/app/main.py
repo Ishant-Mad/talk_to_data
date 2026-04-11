@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import os
 import threading
-from typing import Dict, Generator, Optional
+from typing import Dict, Generator, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -13,6 +14,7 @@ from app.adapters.csv_adapter import CSVAdapter
 from app.contracts import ChatResponse
 from app.profiling.profiler import load_profile, profile_dataset
 from app.agent import run_agent
+from app.planner import propose_chart_plan
 from app.state import profiling_state
 from app.tools import aggregate, compare, filter_data, find_drivers
 from app.utils.logger import get_logger
@@ -20,6 +22,7 @@ from app.utils.fingerprint import compute_dataset_fingerprint
 
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+load_dotenv(os.path.join(REPO_ROOT, ".env"))
 DATA_DIR = os.path.join(REPO_ROOT, "data")
 PROFILE_PATH = os.path.join(REPO_ROOT, "data", "data_profile.json")
 
@@ -81,12 +84,31 @@ def _ensure_profiling() -> None:
     thread.start()
 
 
+def _profiling_stream_terminal(event: Dict[str, object]) -> bool:
+    """End SSE after an explicit terminal payload (avoid queue.empty() under concurrency)."""
+    status = event.get("status")
+    if status == "completed":
+        return True
+    if status == "error" and "message" in event:
+        return True
+    return False
+
+
 def _event_stream() -> Generator[str, None, None]:
     _ensure_profiling()
+    # If profiling already finished and nothing is queued, emit a terminal event so
+    # clients do not block forever on queue.get() (e.g. cached profile on cold start).
+    if profiling_state.status == "done" and profiling_state.queue.empty():
+        yield f"data: {json.dumps({'status': 'completed'})}\n\n"
+        return
+    if profiling_state.status == "error" and profiling_state.queue.empty():
+        message = profiling_state.error or "Profiling failed"
+        yield f"data: {json.dumps({'status': 'error', 'message': message})}\n\n"
+        return
     while True:
         event = profiling_state.queue.get()
         yield f"data: {json.dumps(event)}\n\n"
-        if profiling_state.status in {"done", "error"} and profiling_state.queue.empty():
+        if _profiling_stream_terminal(event):
             break
 
 
@@ -114,6 +136,71 @@ def profiling_status() -> Dict[str, Optional[str]]:
 @app.get("/profiling/stream")
 def profiling_stream() -> StreamingResponse:
     return StreamingResponse(_event_stream(), media_type="text/event-stream")
+
+
+@app.post("/upload")
+async def upload(files: List[UploadFile]) -> Dict[str, object]:
+    if not files:
+        raise HTTPException(status_code=400, detail="No files uploaded.")
+    for file in files:
+        if not file.filename.lower().endswith(".csv"):
+            raise HTTPException(status_code=400, detail="Only CSV files are supported.")
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    for file in files:
+        target_path = os.path.join(DATA_DIR, file.filename)
+        with open(target_path, "wb") as handle:
+            content = await file.read()
+            handle.write(content)
+
+    adapter.reset_cache()
+
+    if os.path.exists(PROFILE_PATH):
+        os.remove(PROFILE_PATH)
+
+    profiling_state.status = "idle"
+    profiling_state.error = None
+    profiling_state.events.clear()
+    return {"status": "uploaded", "files": [file.filename for file in files]}
+
+
+@app.post("/profiling/reset")
+def profiling_reset() -> Dict[str, str]:
+    if os.path.exists(PROFILE_PATH):
+        os.remove(PROFILE_PATH)
+    profiling_state.status = "idle"
+    profiling_state.error = None
+    profiling_state.events.clear()
+    adapter.reset_cache()
+    return {"status": "reset"}
+
+
+@app.get("/dashboard/plan")
+def dashboard_plan() -> Dict[str, object]:
+    try:
+        schema = adapter.schema()
+        plan = propose_chart_plan(schema)
+        charts = []
+        for item in plan.charts:
+            rows = aggregate(
+                adapter,
+                table=item.query.table,
+                metric=item.query.metric,
+                group_by=item.query.group_by,
+                operation=item.query.operation,
+                date_range=item.query.date_range.model_dump() if item.query.date_range else None,
+            )
+            chart = item.chart.model_copy()
+            chart.data = rows[: item.query.limit]
+            charts.append({
+                "title": item.title,
+                "description": item.description,
+                "chart": chart.model_dump(),
+            })
+        return {"charts": charts}
+    except Exception:  # noqa: BLE001
+        logger.exception("dashboard_plan_failed")
+        return {"charts": []}
 
 
 @app.post("/chat")

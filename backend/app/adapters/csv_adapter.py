@@ -9,6 +9,22 @@ from app.adapters.base import DataAdapter
 from app.profiling.profiler import load_profile
 
 
+def _looks_like_date_only(value: str) -> bool:
+    stripped = value.strip()
+    if not stripped or "T" in stripped.upper():
+        return False
+    return len(stripped) <= 10 and stripped[0].isdigit()
+
+
+def _parse_ts(value: Optional[str]) -> Optional[pd.Timestamp]:
+    if value is None or not str(value).strip():
+        return None
+    ts = pd.to_datetime(str(value).strip(), errors="coerce", utc=True, format="mixed")
+    if pd.isna(ts):
+        return None
+    return ts
+
+
 class CSVAdapter(DataAdapter):
     def __init__(self, data_dir: str, profile_path: str) -> None:
         self._data_dir = data_dir
@@ -19,8 +35,41 @@ class CSVAdapter(DataAdapter):
         profile = load_profile(self._profile_path)
         return profile or {"tables": {}}
 
+    def reset_cache(self) -> None:
+        self._frames.clear()
+
     def list_tables(self) -> List[str]:
         return [os.path.splitext(name)[0] for name in os.listdir(self._data_dir) if name.endswith(".csv")]
+
+    def _time_series(self, frame: pd.DataFrame, date_col: str) -> pd.Series:
+        return pd.to_datetime(frame[date_col], errors="coerce", utc=True, format="mixed")
+
+    def _mask_date_range(self, frame: pd.DataFrame, table: str, date_range: Optional[Dict[str, str]]) -> pd.DataFrame:
+        if not date_range:
+            return frame
+        date_col = self._infer_time_column(table)
+        if not date_col:
+            return frame
+        self._require_columns(frame, table, [date_col])
+        parsed = self._time_series(frame, date_col)
+        mask = parsed.notna()
+
+        start_raw = date_range.get("start")
+        start_ts = _parse_ts(start_raw if isinstance(start_raw, str) else None)
+        if start_ts is not None and isinstance(start_raw, str) and _looks_like_date_only(start_raw):
+            start_ts = start_ts.normalize()
+        if start_ts is not None:
+            mask &= parsed >= start_ts
+
+        end_raw = date_range.get("end")
+        end_ts = _parse_ts(end_raw if isinstance(end_raw, str) else None)
+        if end_ts is not None:
+            if isinstance(end_raw, str) and _looks_like_date_only(end_raw):
+                mask &= parsed < end_ts.normalize() + pd.Timedelta(days=1)
+            else:
+                mask &= parsed <= end_ts
+
+        return frame.loc[mask]
 
     def filter(
         self,
@@ -36,15 +85,7 @@ class CSVAdapter(DataAdapter):
         for column, value in filters.items():
             result = result[result[column] == value]
 
-        if date_range:
-            date_col = self._infer_time_column(table)
-            if date_col:
-                start = date_range.get("start")
-                end = date_range.get("end")
-                if start:
-                    result = result[result[date_col] >= start]
-                if end:
-                    result = result[result[date_col] <= end]
+        result = self._mask_date_range(result, table, date_range)
 
         return result.to_dict(orient="records")
 
@@ -61,15 +102,7 @@ class CSVAdapter(DataAdapter):
         if group_by:
             self._require_columns(frame, table, [group_by])
 
-        if date_range:
-            date_col = self._infer_time_column(table)
-            if date_col:
-                start = date_range.get("start")
-                end = date_range.get("end")
-                if start:
-                    frame = frame[frame[date_col] >= start]
-                if end:
-                    frame = frame[frame[date_col] <= end]
+        frame = self._mask_date_range(frame, table, date_range)
 
         if operation == "count":
             if group_by:

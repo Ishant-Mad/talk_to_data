@@ -22,7 +22,7 @@ def _detect_date_column(series: pd.Series) -> float:
     sample = series.dropna().astype(str).head(2000)
     if sample.empty:
         return 0.0
-    parsed = pd.to_datetime(sample, errors="coerce", utc=True)
+    parsed = pd.to_datetime(sample, errors="coerce", utc=True, format="mixed")
     return float(parsed.notna().mean())
 
 
@@ -103,12 +103,17 @@ def _scan_csv(
                     high_cardinality[col] = True
                     unique_sets[col].clear()
 
-        if progress is not None:
+        if progress is not None and len(chunk.columns) > 0:
+            feature_index = (chunk_index - 1) % len(chunk.columns)
+            feature_name = chunk.columns[feature_index]
+            feature_samples = chunk[feature_name].dropna().astype(str).unique().tolist()[:6]
             progress({
                 **progress_meta,
                 "rows_scanned": total_rows,
                 "chunk": chunk_index,
                 "status": "scanning",
+                "feature": feature_name,
+                "samples": feature_samples,
             })
 
     columns: Dict[str, ColumnProfile] = {}

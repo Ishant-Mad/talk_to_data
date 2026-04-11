@@ -316,11 +316,39 @@ def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Di
         })
         logger.warning("agent_response_invalid attempt_retry")
 
+    return _fallback_response(schema)
+
+
+def _fallback_response(schema: Dict[str, Any]) -> Dict[str, Any]:
+    tables = schema.get("tables", {}) if isinstance(schema, dict) else {}
+    if not tables:
+        return {
+            "summary": "No profiled tables are available yet. Upload CSV files to start analysis.",
+            "data_source": "",
+            "chart": {"type": "table", "data": []},
+            "confidence": "low",
+        }
+
+    rows = []
+    for table_name, table in tables.items():
+        rows.append({"table": table_name, "row_count": int(table.get("row_count", 0))})
+    rows.sort(key=lambda row: row["row_count"], reverse=True)
+
+    top = rows[0]
     return {
-        "summary": "The agent response was invalid.",
-        "data_source": "",
-        "chart": {"type": "table", "data": []},
-        "confidence": "low",
+        "summary": (
+            f"I could not parse a structured model response, so here is a safe fallback. "
+            f"The largest table is {top['table']} with {top['row_count']} rows."
+        ),
+        "data_source": "schema.tables.row_count",
+        "chart": {
+            "type": "bar",
+            "data": rows[:10],
+            "xKey": "table",
+            "yKey": "row_count",
+            "series": [],
+        },
+        "confidence": "medium",
     }
 
 

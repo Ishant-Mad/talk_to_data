@@ -43,6 +43,32 @@ class ChatResponse(BaseModel):
     confidence: ConfidenceLevel
 
 
+class ChartQuery(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    table: str
+    metric: str
+    operation: Literal["sum", "avg", "mean", "count"]
+    group_by: Optional[str] = None
+    date_range: Optional[DateRange] = None
+    limit: int = 24
+
+
+class ChartPlanItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    description: Optional[str] = None
+    chart: ChartSpec
+    query: ChartQuery
+
+
+class ChartPlanResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    charts: List[ChartPlanItem]
+
+
 class FilterArgs(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
