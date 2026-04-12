@@ -14,8 +14,10 @@ echo "==============================="
 echo "Starting FastAPI Backend..."
 cd backend
 
-# Activate virtual environment
-source ../.venv/bin/activate
+# Activate virtual environment if it exists
+if [ -f "../.venv/bin/activate" ]; then
+    source ../.venv/bin/activate
+fi
 
 # Use port 8000 locally, or Render's provided PORT
 PORT="${PORT:-8000}"
@@ -31,7 +33,13 @@ echo "Starting Next.js Frontend..."
 cd frontend
 
 # Start frontend server in the background
-npm run dev &
+if [ "$NODE_ENV" = "production" ]; then
+    echo "Running in production mode..."
+    npm run start &
+else
+    echo "Running in development mode..."
+    npm run dev &
+fi
 FRONTEND_PID=$!
 
 echo "==============================="

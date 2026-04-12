@@ -41,32 +41,12 @@ function MoonIcon() {
     <svg
       width="20"
       height="20"
-      viewBox="0 0 20 20"
-      fill="none"
+      viewBox="0 0 24 24"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
-      <path
-        d="M12.2 3.2a6.2 6.2 0 1 0 4.6 10.1A7.8 7.8 0 0 1 10 18 8 8 0 0 1 12.2 3.2Z"
-        fill="currentColor"
-        opacity="0.92"
-      />
-      <circle
-        className="theme-toggle__star"
-        cx="5.2"
-        cy="5.3"
-        r="0.65"
-        fill="currentColor"
-        opacity="0.85"
-      />
-      <circle
-        className="theme-toggle__star theme-toggle__star--2"
-        cx="7.1"
-        cy="3.4"
-        r="0.45"
-        fill="currentColor"
-        opacity="0.75"
-      />
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   );
 }
@@ -79,9 +59,11 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <span
-        className="theme-toggle theme-toggle--defer"
+      <button
+        type="button"
+        className="theme-switch theme-switch--defer"
         aria-hidden="true"
+        disabled
       />
     );
   }
@@ -89,16 +71,19 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className={`theme-toggle theme-toggle--${isLight ? "light" : "dark"}`}
+      className={`theme-switch ${isLight ? "" : "theme-switch--dark"}`}
       onClick={toggleTheme}
       aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
       title={isLight ? "Dark mode" : "Light mode"}
     >
-      <span className="theme-toggle__inner">
-        <span className="theme-toggle__layer theme-toggle__layer--sun theme-toggle__sun">
+      <span className="theme-switch__track">
+        <span className="theme-switch__thumb">
+          {isLight ? <SunIcon /> : <MoonIcon />}
+        </span>
+        <span className="theme-switch__icon theme-switch__icon--sun">
           <SunIcon />
         </span>
-        <span className="theme-toggle__layer theme-toggle__layer--moon theme-toggle__moon">
+        <span className="theme-switch__icon theme-switch__icon--moon">
           <MoonIcon />
         </span>
       </span>

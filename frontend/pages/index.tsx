@@ -322,10 +322,12 @@ function InteractiveCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const combinations = item.valid_combinations || [];
 
-  const apiBase =
+  // Remove trailing slashes to avoid '//' when appending routes
+  const rawApiBase =
     typeof window !== "undefined"
       ? process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
       : "http://127.0.0.1:8000";
+  const apiBase = rawApiBase.replace(/\/+$/, "");
 
   useEffect(() => {
     const handleFocus = (evt: CustomEvent) => {
@@ -737,7 +739,9 @@ export default function Home() {
   >("chat");
   const [showTip, setShowTip] = useState(false);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  // Remove trailing slashes
+  const rawApiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const apiBase = rawApiBase.replace(/\/+$/, "");
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -807,23 +811,17 @@ export default function Home() {
     setSignalsLoading(true);
 
     try {
-      const planStart = Date.now();
       const planResponse = await fetch(`${apiBase}/dashboard/plan`);
       if (planResponse.ok) {
         const planPayload = (await planResponse.json()) as ChartPlanResponse;
         setCharts(planPayload.charts || []);
       }
-      const elapsed = Date.now() - planStart;
-      setTimeout(
-        () => {
-          setSignalsLoading(false);
-          setActiveRightTab("signals");
-        },
-        Math.max(0, 1000 - elapsed),
-      );
+      setSignalsLoading(false);
+      setActiveRightTab("signals");
     } catch {
       setCharts([]);
       setSignalsLoading(false);
+      setActiveRightTab("signals");
     }
   }
 
@@ -934,6 +932,7 @@ export default function Home() {
       setCharts([]);
       setSchema(null);
       setLoading(true);
+      setActiveRightTab("schema");
       try {
         const formData = new FormData();
         Array.from(files).forEach((file) => formData.append("files", file));
@@ -1086,56 +1085,6 @@ export default function Home() {
               }}
             >
               No files loaded
-            </div>
-          )}
-
-          {/* Collapsible schema */}
-          {schema?.tables && Object.keys(schema.tables).length > 0 && (
-            <div className="schema-section">
-              <button
-                className="schema-section__toggle"
-                onClick={() => setSchemaOpen((v) => !v)}
-                aria-expanded={schemaOpen}
-              >
-                <span className="schema-section__label">Schema</span>
-                <svg
-                  className={`schema-section__chevron${schemaOpen ? " schema-section__chevron--open" : ""}`}
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {schemaOpen && (
-                <div className="schema-section__body">
-                  {Object.entries(schema.tables).map(([tableName, table]) => (
-                    <div key={tableName} className="schema-table-block">
-                      <span className="schema-table-name">{tableName}</span>
-                      {table.columns &&
-                        Object.entries(table.columns)
-                          .slice(0, 15)
-                          .map(([colName, col]) => (
-                            <div key={colName} className="schema-col-row">
-                              <span className="schema-col-name">{colName}</span>
-                              <span
-                                className={getTypeBadgeClass(
-                                  col.inferred_type || "",
-                                )}
-                              >
-                                {typeLabel(col.inferred_type || "unknown")}
-                              </span>
-                            </div>
-                          ))}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1601,6 +1550,42 @@ export default function Home() {
                     </table>
                   </div>
                 ))
+              ) : liveTables.length > 0 ? (
+                liveTables.map((table, index) => {
+                  const isDone2 = table.status === "done" || table.status === "completed";
+                  return (
+                    <div key={`${table.tableName}-${index}`} className="right-schema-table">
+                      <div className="right-schema-table__header">
+                        <span className="right-schema-table__name">
+                          {table.tableName}
+                          {!isDone2 && <span className="pulse-loader" style={{ marginLeft: "8px", width: "6px", height: "6px", display: "inline-block" }} />}
+                        </span>
+                        <span className="right-schema-table__rows">
+                          {table.rows_scanned.toLocaleString()} rows
+                        </span>
+                      </div>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Column</th>
+                            <th>Detected samples</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Object.entries(table.features).map(([fName, samples]) => (
+                            <tr key={fName}>
+                              <td style={{ fontFamily: "var(--font-mono)" }}>{fName}</td>
+                              <td style={{ color: "var(--text-hint)", fontSize: "11px" }}>
+                                {samples.slice(0, 3).join(", ")}
+                                {samples.length > 3 ? "..." : ""}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })
               ) : (
                 <div className="card">
                   <h3 style={{ fontSize: "14px" }}>No schema built</h3>

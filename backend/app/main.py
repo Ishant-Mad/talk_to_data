@@ -14,6 +14,7 @@ from fastapi.responses import StreamingResponse
 from app.adapters.csv_adapter import CSVAdapter
 from app.contracts import ChatResponse
 from app.profiling.profiler import load_profile, profile_dataset
+from app.llm.llm_client import get_llm_client
 from app.agent import run_agent
 from app.planner import propose_chart_plan
 from app.state import profiling_state
@@ -139,6 +140,45 @@ def health() -> Dict[str, str]:
 def get_schema() -> Dict[str, object]:
     _ensure_profiling()
     return adapter.schema()
+
+
+@app.get("/suggested_questions")
+def suggested_questions() -> Dict[str, object]:
+    _ensure_profiling()
+    schema = adapter.schema()
+    
+    # Return empty array if no schema is formed yet
+    if not schema.get("tables"):
+        return {"questions": []}
+        
+    client = get_llm_client()
+    messages = [
+        {
+            "role": "system", 
+            "content": "You are a data assistant. Output ONLY a valid JSON array of exactly 3 strings suggesting short, analytical questions based on this database schema. No markdown mapping."
+        },
+        {"role": "user", "content": f"Schema: {json.dumps(schema)}"}
+    ]
+    try:
+        response = client.chat(messages, temperature=0.7)
+        content = response["choices"][0]["message"]["content"].strip()
+        
+        if content.startswith("```"):
+            import re
+            content = re.sub(r'```(?:json)?\n?(.*?)\n?```', r'\1', content, flags=re.DOTALL).strip()
+            
+        questions = json.loads(content)
+        if isinstance(questions, list) and len(questions) >= 3:
+            return {"questions": questions[:3]}
+    except Exception:
+        logger.exception("suggested_questions failed")
+        
+    # Default fallback
+    return {"questions": [
+        "Show revenue by region for Q1",
+        "Which product had the most returns?",
+        "Compare support tickets by month"
+    ]}
 
 
 @app.get("/profiling/status")

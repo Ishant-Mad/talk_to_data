@@ -46,6 +46,11 @@ cd frontend
 echo "Installing frontend dependencies..."
 npm install
 
+if [ "$NODE_ENV" = "production" ]; then
+    echo "Building frontend for production..."
+    npm run build
+fi
+
 echo "==============================="
 echo "Setup Complete! 🎉"
 echo "You can now run the project at any time using: ./start.sh"

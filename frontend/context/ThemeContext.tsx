@@ -28,7 +28,7 @@ export function applyDomTheme(mode: ThemeMode) {
   if (mode === "light") {
     root.setAttribute("data-theme", "light");
   } else {
-    root.removeAttribute("data-theme");
+    root.setAttribute("data-theme", "dark");
   }
 }
 
@@ -37,7 +37,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useLayoutEffect(() => {
     try {
-      const stored = window.localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null;
+      const stored = window.localStorage.getItem(
+        THEME_STORAGE_KEY,
+      ) as ThemeMode | null;
       if (stored === "light" || stored === "dark") {
         setThemeState(stored);
         applyDomTheme(stored);
@@ -77,7 +79,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [theme, setTheme, toggleTheme],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {
