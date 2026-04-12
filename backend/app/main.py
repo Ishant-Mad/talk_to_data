@@ -177,6 +177,56 @@ async def upload(files: List[UploadFile]) -> Dict[str, object]:
     return {"status": "uploaded", "files": [file.filename for file in files]}
 
 
+@app.get("/upload/demo")
+def upload_demo(dataset: str) -> Dict[str, object]:
+    import shutil
+    DATA_SOURCE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data2")
+    
+    if not os.path.exists(DATA_SOURCE):
+        raise HTTPException(status_code=400, detail="data2 folder not found")
+    
+    if dataset not in ("single", "multiple"):
+        raise HTTPException(status_code=400, detail="dataset must be 'single' or 'multiple'")
+        
+    os.makedirs(DATA_DIR, exist_ok=True)
+    for filename in os.listdir(DATA_DIR):
+        file_path = os.path.join(DATA_DIR, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    
+    if dataset == "single":
+        files_to_copy = ["business_data.csv"]
+    else:
+        files_to_copy = ["complaints.csv", "customers.csv", "support_tickets.csv", "transactions.csv"]
+        
+    copied_files = []
+    for filename in files_to_copy:
+        src_path = os.path.join(DATA_SOURCE, filename)
+        if os.path.exists(src_path):
+            dest_path = os.path.join(DATA_DIR, filename)
+            shutil.copy2(src_path, dest_path)
+            copied_files.append(filename)
+            
+    if not copied_files:
+        raise HTTPException(status_code=400, detail=f"No demo files found in {DATA_SOURCE}.")
+        
+    adapter._init_duckdb_views()
+    
+    if os.path.exists(PROFILE_PATH):
+        os.remove(PROFILE_PATH)
+        
+    profiling_state.status = "idle"
+    profiling_state.error = None
+    profiling_state.events.clear()
+    adapter.reset_cache()
+    
+    return {
+        "status": "demo_loaded",
+        "dataset": dataset,
+        "files": copied_files
+    }
+
+
 @app.post("/profiling/reset")
 def profiling_reset() -> Dict[str, str]:
     if os.path.exists(PROFILE_PATH):

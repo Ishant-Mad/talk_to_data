@@ -638,30 +638,66 @@ export default function Home() {
   const handleDemoClick = async (demoId: string) => {
     setUploading(true);
     setUploadError(null);
+    setLoading(true);
     setProfilingStatus("checking");
 
-    // Simulate a brief delay to show loading state
-    await new Promise((r) => setTimeout(r, 400));
+    try {
+      const response = await fetch(`${apiBase}/upload/demo?dataset=${demoId}`);
+      
+      if (!response.ok) {
+        const error = await readApiError(response);
+        setUploadError(error);
+        setUploading(false);
+        setLoading(false);
+        return;
+      }
 
-    // We mock a successful "upload" by transitioning to profiling
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(DATASET_FROM_UPLOAD_KEY, "1");
-    }
-
-    setProfilingStatus("profiling");
-    setProfilingEvents([
-      { message: `Loading demo dataset: ${demoId}...`, status: "info" },
-    ]);
-
-    setTimeout(() => {
-      setProfilingEvents((p) => [
-        ...p,
-        { message: "Generating dashboard...", status: "info" },
+      const result = await response.json();
+      
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(DATASET_FROM_UPLOAD_KEY, "1");
+      }
+      
+      setProfilingStatus("profiling");
+      setProfilingEvents([
+        { message: `Loading demo dataset: ${demoId} (${result.files.join(", ")})...`, status: "info" },
       ]);
-      setLoading(false); // End loading flow
-      setExploreReady(true);
+      
+      const eventSource = new EventSource(`${apiBase}/profiling/stream`);
+      
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data) as ProfilingEvent;
+        setProfilingEvents((prev) => [...prev, data]);
+        
+        if (data.status === "completed" || data.status === "error") {
+          eventSource.close();
+          if (data.status === "completed") {
+            setProfilingStatus("done");
+            setStreamKey((prev) => prev + 1);
+            refreshSchemaAndPlan();
+          } else {
+            setProfilingStatus("error");
+            setProfilingError(data.message || "Profiling failed");
+            setLoading(false);
+          }
+          setExploreReady(true);
+          setUploading(false);
+        }
+      };
+      
+      eventSource.onerror = () => {
+        eventSource.close();
+        setProfilingStatus("error");
+        setProfilingError("Failed to connect to profiling stream");
+        setLoading(false);
+        setExploreReady(true);
+        setUploading(false);
+      };
+    } catch (error) {
+      setUploadError(`Failed to load demo dataset: ${String(error)}`);
+      setLoading(false);
       setUploading(false);
-    }, 1000);
+    }
   };
 
   const [chatLoading, setChatLoading] = useState(false);
