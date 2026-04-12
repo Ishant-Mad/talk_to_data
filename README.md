@@ -100,7 +100,9 @@ Ask a question — get back not just text, but an automatically selected and ren
  
 ## Quickstart
  
-**Prerequisites:** Python 3.11+, Node.js 18+
+> 🚀 **No setup needed** — try the live deployment instantly at **[talk-to-data-frontend-dhcc.onrender.com](https://talk-to-data-frontend-dhcc.onrender.com/)**. Upload a CSV or load a demo dataset and start asking questions right away.
+ 
+**To run locally — Prerequisites:** Python 3.11+, Node.js 18+
  
 ### 1. Clone the repo
  
@@ -136,10 +138,30 @@ npm run dev
  
 Open **http://localhost:3000** — upload a CSV and start asking questions.
  
-> 💡 **VS Code users:** use the pre-configured *Run Project* task (`tasks.json`) to start both servers in one click.
- 
 ---
  
+### ⚡ Faster alternative: one-click start with VS Code
+ 
+If you use VS Code, you don't need to run any of the manual steps above. The repo includes a pre-configured `tasks.json` that handles everything — venv creation, dependency install, and both servers — in parallel, automatically.
+ 
+1. Open the project folder in VS Code
+2. Open the Command Palette: `Cmd+Shift+P` (macOS) / `Ctrl+Shift+P` (Windows/Linux)
+3. Run **Tasks: Run Task** → select **Run Project (Split Terminals)**
+ 
+That's it. VS Code will:
+- Create a Python virtual environment (`.venv`) if one doesn't exist
+- Install backend dependencies via `pip`
+- Install frontend dependencies via `npm`
+- Start both servers in parallel in a shared terminal panel
+ 
+| Task | What it runs |
+|---|---|
+| `Start Backend` | Creates `.venv` → activates it → `pip install` → `uvicorn` on port 8000 |
+| `Start Frontend` | `npm install` → `npm run dev` on port 3000 |
+| `Run Project (Split Terminals)` | Runs both tasks above in parallel — **use this one** |
+ 
+---
+
 ## Environment variables
  
 Copy `.env.example` to `.env` and fill in values for your chosen LLM provider. You only need to configure **one** provider.
@@ -161,7 +183,7 @@ GITHUB_MODEL=Ministral-3B
  
 # OpenRouter (recommended — supports free models and multi-key load balancing)
 # Comma-separated list of keys for automatic rotation across rate limits
-OPENROUTER_API_KEYS="key1,key2,key3"
+OPENROUTER_API_KEYS="key1,key2,key3" or OPENROUTER_API_KEY=key
 OPENROUTER_MODEL=openai/gpt-oss-120b:free
 ```
  
