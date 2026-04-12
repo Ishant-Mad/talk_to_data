@@ -54,7 +54,8 @@ def propose_chart_plan(schema: Dict[str, Any]) -> ChartPlanResponse:
     responses = []
     try:
         response = client.chat(messages=messages, temperature=0.2)
-        content = response["choices"][0]["message"].get("content", "{}").strip()
+        raw_content = response["choices"][0]["message"].get("content")
+        content = (raw_content or "{}").strip()
         print("LLM RESPONSE:", content)
         parsed = _try_parse_json(content)
         

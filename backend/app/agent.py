@@ -117,7 +117,8 @@ def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Di
 
     for _ in range(2):
         final = client.chat(messages=messages)
-        content = final["choices"][0]["message"].get("content", "{}").strip()
+        raw_final_content = final["choices"][0]["message"].get("content")
+        content = (raw_final_content or "{}").strip()
         parsed = _parse_response(content)
         if parsed:
             try:
