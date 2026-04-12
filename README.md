@@ -2,10 +2,11 @@
  
 <!-- Replace with your actual logo -->
 <img src="docs/logo.png" alt="Talk to Data" width="72" height="72" />
-<img width="1920" height="903" alt="image" src="https://github.com/user-attachments/assets/28b5d5cf-f7af-44af-83b9-13ffd4e8b438" />
-
  
 # Talk to Data
+
+<img width="1920" height="903" alt="image" src="https://github.com/user-attachments/assets/28b5d5cf-f7af-44af-83b9-13ffd4e8b438" />
+
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://talk-to-data-frontend-dhcc.onrender.com/)
 
 **Ask questions. Get answers. No SQL required.**
