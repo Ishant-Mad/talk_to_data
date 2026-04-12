@@ -488,6 +488,17 @@ export default function Home() {
       const schemaResponse = await fetch(`${apiBase}/schema`);
       if (schemaResponse.ok) {
         const schemaPayload = (await schemaResponse.json()) as SchemaPayload;
+        if (!schemaPayload.tables || Object.keys(schemaPayload.tables).length === 0) {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(DATASET_FROM_UPLOAD_KEY);
+          }
+          setExploreReady(false);
+          setSchema(null);
+          setCharts([]);
+          setLoading(false);
+          setSignalsLoading(false);
+          return;
+        }
         setSchema(schemaPayload);
       }
     } catch {
@@ -534,7 +545,7 @@ export default function Home() {
         if (statusPayload.error) {
           setProfilingError(statusPayload.error);
         }
-        if (statusPayload.status === "done") {
+        if (statusPayload.status === "done" || (statusPayload.status === "idle" && hasUserUploadedDataset())) {
           refreshSchemaAndPlan();
         }
       } catch {

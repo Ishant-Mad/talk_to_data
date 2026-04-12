@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import threading
 from typing import Dict, Generator, List, Optional
 
@@ -25,6 +26,18 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 load_dotenv(os.path.join(REPO_ROOT, ".env"), override=True)
 DATA_DIR = os.path.join(REPO_ROOT, "data")
 PROFILE_PATH = os.path.join(REPO_ROOT, "data", "data_profile.json")
+
+if os.path.exists(DATA_DIR):
+    for filename in os.listdir(DATA_DIR):
+        file_path = os.path.join(DATA_DIR, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception:
+            pass
+os.makedirs(DATA_DIR, exist_ok=True)
 
 app = FastAPI(title="Talk to Data API")
 adapter = CSVAdapter(DATA_DIR, PROFILE_PATH)
