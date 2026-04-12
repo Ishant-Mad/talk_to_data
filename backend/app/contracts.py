@@ -34,6 +34,14 @@ class ChartSpec(BaseModel):
     series: List[ChartSeries] = Field(default_factory=list)
 
 
+class AnalysisItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: str # "Understand what changed", "Compare", "Breakdown", "Summarize"
+    insight: str
+    chart: Optional[ChartSpec] = None
+
+
 class ChatResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -41,6 +49,8 @@ class ChatResponse(BaseModel):
     data_source: str = ""
     chart: ChartSpec
     confidence: ConfidenceLevel
+    reasoning_steps: Optional[List[str]] = Field(default_factory=list)
+    analyses: Optional[List[AnalysisItem]] = Field(default_factory=list)
 
     @field_validator("confidence", mode="before")
     def _lower_confidence(cls, v: Any) -> Any:

@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Protocol
 import requests
 
 
+
 class LLMClient(Protocol):
     def chat(
         self,
@@ -18,18 +19,42 @@ class LLMClient(Protocol):
     ) -> Dict[str, Any]:
         ...
 
+class KeyRotator:
+    _instances: Dict[str, 'KeyRotator'] = {}
+
+    def __new__(cls, keys_str: Optional[str]) -> 'KeyRotator':
+        keys_str = keys_str or ""
+        if keys_str not in cls._instances:
+            instance = super(KeyRotator, cls).__new__(cls)
+            instance._init(keys_str)
+            cls._instances[keys_str] = instance
+        return cls._instances[keys_str]
+
+    def _init(self, keys_str: str) -> None:
+        self.keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        self._index = 0
+
+    def get_key(self) -> str:
+        if not self.keys:
+            return ""
+        key = self.keys[self._index]
+        self._index = (self._index + 1) % len(self.keys)
+        return key
+
+
 
 class GroqClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
-        self._api_key = api_key or os.getenv("GROQ_API_KEY")
+        keys_str = api_key or os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY")
+        self._rotator = KeyRotator(keys_str)
         self._base_url = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
         self._model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
-    def _headers(self) -> Dict[str, str]:
-        if not self._api_key:
+    def _headers(self, current_key: str) -> Dict[str, str]:
+        if not current_key:
             raise RuntimeError("GROQ_API_KEY is not configured.")
         return {
-            "Authorization": f"Bearer {self._api_key}",
+            "Authorization": f"Bearer {current_key}",
             "Content-Type": "application/json",
         }
 
@@ -51,9 +76,10 @@ class GroqClient:
             payload["tool_choice"] = tool_choice
 
         for attempt in range(2):
+            current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
-                headers=self._headers(),
+                headers=self._headers(current_key),
                 data=json.dumps(payload),
                 timeout=30,
             )
@@ -68,15 +94,16 @@ class GroqClient:
 
 class GithubClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
-        self._api_key = api_key or os.getenv("GITHUB_TOKEN")
+        keys_str = api_key or os.getenv("GITHUB_TOKENS") or os.getenv("GITHUB_TOKEN")
+        self._rotator = KeyRotator(keys_str)
         self._base_url = os.getenv("GITHUB_API_BASE", "https://models.inference.ai.azure.com")
         self._model = os.getenv("GITHUB_MODEL", "Ministral-3B")
 
-    def _headers(self) -> Dict[str, str]:
-        if not self._api_key:
+    def _headers(self, current_key: str) -> Dict[str, str]:
+        if not current_key:
             raise RuntimeError("GITHUB_TOKEN is not configured for GithubClient.")
         return {
-            "Authorization": f"Bearer {self._api_key}",
+            "Authorization": f"Bearer {current_key}",
             "Content-Type": "application/json",
         }
 
@@ -98,9 +125,10 @@ class GithubClient:
             payload["tool_choice"] = tool_choice
 
         for attempt in range(2):
+            current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
-                headers=self._headers(),
+                headers=self._headers(current_key),
                 data=json.dumps(payload),
                 timeout=30,
             )
@@ -115,15 +143,16 @@ class GithubClient:
 
 class OpenRouterClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
-        self._api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        keys_str = api_key or os.getenv("OPENROUTER_API_KEYS") or os.getenv("OPENROUTER_API_KEY")
+        self._rotator = KeyRotator(keys_str)
         self._base_url = os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1")
         self._model = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
 
-    def _headers(self) -> Dict[str, str]:
-        if not self._api_key:
+    def _headers(self, current_key: str) -> Dict[str, str]:
+        if not current_key:
             raise RuntimeError("OPENROUTER_API_KEY is not configured for OpenRouterClient.")
         return {
-            "Authorization": f"Bearer {self._api_key}",
+            "Authorization": f"Bearer {current_key}",
             "Content-Type": "application/json",
         }
 
@@ -145,9 +174,10 @@ class OpenRouterClient:
             payload["tool_choice"] = tool_choice
 
         for attempt in range(2):
+            current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
-                headers=self._headers(),
+                headers=self._headers(current_key),
                 data=json.dumps(payload),
                 timeout=30,
             )
