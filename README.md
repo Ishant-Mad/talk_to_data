@@ -5,8 +5,6 @@
  
 # Talk to Data
 
-<img width="1920" height="903" alt="image" src="https://github.com/user-attachments/assets/28b5d5cf-f7af-44af-83b9-13ffd4e8b438" />
-
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://talk-to-data-frontend-dhcc.onrender.com/)
 
 **Ask questions. Get answers. No SQL required.**
@@ -15,6 +13,7 @@ An intelligent analytics platform that turns natural language into insights, cha
  
 <!-- Replace with your demo GIF -->
 <img src="docs/demo.gif" alt="Product demo" width="680" />
+<img width="750" alt="image" src="https://github.com/user-attachments/assets/28b5d5cf-f7af-44af-83b9-13ffd4e8b438" />
  
 <br/>
 
