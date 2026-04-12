@@ -75,7 +75,8 @@ class GroqClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        for attempt in range(2):
+        max_attempts = max(2, len(self._rotator.keys))
+        for attempt in range(max_attempts):
             current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
@@ -83,10 +84,11 @@ class GroqClient:
                 data=json.dumps(payload),
                 timeout=30,
             )
-            if response.status_code == 429 and attempt < 1:
-                retry_after = response.headers.get("Retry-After")
-                sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                time.sleep(sleep_time)
+            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
+                    time.sleep(sleep_time)
                 continue
             
             response.raise_for_status()
@@ -124,7 +126,8 @@ class GithubClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        for attempt in range(2):
+        max_attempts = max(2, len(self._rotator.keys))
+        for attempt in range(max_attempts):
             current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
@@ -132,10 +135,11 @@ class GithubClient:
                 data=json.dumps(payload),
                 timeout=30,
             )
-            if response.status_code == 429 and attempt < 1:
-                retry_after = response.headers.get("Retry-After")
-                sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                time.sleep(sleep_time)
+            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
+                    time.sleep(sleep_time)
                 continue
             
             response.raise_for_status()
@@ -173,7 +177,8 @@ class OpenRouterClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        for attempt in range(2):
+        max_attempts = max(2, len(self._rotator.keys))
+        for attempt in range(max_attempts):
             current_key = self._rotator.get_key()
             response = requests.post(
                 f"{self._base_url}/chat/completions",
@@ -181,10 +186,11 @@ class OpenRouterClient:
                 data=json.dumps(payload),
                 timeout=30,
             )
-            if response.status_code == 429 and attempt < 1:
-                retry_after = response.headers.get("Retry-After")
-                sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                time.sleep(sleep_time)
+            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
+                if response.status_code == 429:
+                    retry_after = response.headers.get("Retry-After")
+                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
+                    time.sleep(sleep_time)
                 continue
             
             response.raise_for_status()

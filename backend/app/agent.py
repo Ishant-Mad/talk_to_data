@@ -36,6 +36,7 @@ def _system_prompt() -> str:
         "COMMUNICATION RULES:\n"
         "1. Write your 'summary' and 'insight' fields using concise bullet points and tables instead of long text paragraphs.\n"
         "2. Ensure the 'chart' provided perfectly matches the insight. For example, if the answer points to reduced ad spend, the attached chart MUST visualize exactly the ad spend data. Do not include vague or unrelated charts.\n"
+        "3. When visualizing a comparison or a specific answer (e.g. who got the most returns), include ALL categories in the chart data, do not filter down to just the answer class. Instead, add a boolean property `highlight: true` to the specific row in the `chart.data` array corresponding to the answer.\n"
         "If you need more information, call the execute_sql tool. When you have enough information to answer the user's question, return ONLY a valid JSON object matching this exact schema:\n"
         "- 'summary': A high-level text summary of the overall answer (prefer bullet points).\n"
         "- 'data_source': EXACTLY the main table name you queried (e.g. 'transactions', 'customers').\n"
@@ -80,7 +81,7 @@ def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Di
 
     logger.info("question_received characters=%s", len(question))
 
-    max_iterations = 3
+    max_iterations = 5
     
     for iteration in range(max_iterations):
         if iteration > 0:

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Change to the directory containing the script
+cd "$(dirname "$0")"
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -15,7 +18,11 @@ cd backend
 if [ ! -d "../.venv" ]; then
     echo "Creating virtual environment..."
     # Attempt to use python3, fallback to python
-    if command -v python3 &>/dev/null; then
+    if command -v python3.11 &>/dev/null; then
+        python3.11 -m venv ../.venv
+    elif command -v python3.10 &>/dev/null; then
+        python3.10 -m venv ../.venv
+    elif command -v python3 &>/dev/null; then
         python3 -m venv ../.venv
     else
         python -m venv ../.venv

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Change to the directory containing the script
+cd "$(dirname "$0")"
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -14,8 +17,11 @@ cd backend
 # Activate virtual environment
 source ../.venv/bin/activate
 
+# Use port 8000 locally, or Render's provided PORT
+PORT="${PORT:-8000}"
+
 # Start backend server in the background
-python -m uvicorn app.main:app --reload --port 8000 &
+python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT &
 BACKEND_PID=$!
 
 cd ..
@@ -36,7 +42,7 @@ echo "==============================="
 echo "Press Ctrl+C to stop both servers."
 
 # Trap INT and TERM signals to kill background processes when the script exits
-trap "echo 'Stopping servers...'; kill $BACKEND_PID $FRONTEND_PID; exit 0" INT TERM
+trap 'echo "Stopping servers..."; kill 0' SIGINT SIGTERM EXIT
 
 # Wait for background processes
 wait

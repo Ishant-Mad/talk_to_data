@@ -231,10 +231,18 @@ function RechartsBlock({
         <Tooltip contentStyle={tooltipStyle} />
         <Bar
           dataKey={inferY}
-          fill={c.fill}
           radius={[4, 4, 0, 0]}
           maxBarSize={40}
-        />
+        >
+          {chart.data?.map((entry: any, index: number) => {
+            const hasHighlight = chart.data?.some((d: any) => d.highlight === true);
+            const fillColor =
+              hasHighlight && !entry.highlight
+                ? "#CBD5E1" // dull/greyed out
+                : entry.color || c.fill;
+            return <Cell key={`cell-${index}`} fill={fillColor} />;
+          })}
+        </Bar>
       </BarChart>
     );
   }
