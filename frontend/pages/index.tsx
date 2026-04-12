@@ -479,7 +479,17 @@ function InteractiveCard({
                   setSelectedY(newY);
                   setSelectedOp(newOp);
                 }}
-                style={{ flex: 1, minWidth: 0 }}
+                style={{
+                  width: "auto",
+                  maxWidth: "100%",
+                  minWidth: "250px",
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-page)",
+                  fontSize: "13px",
+                  color: "var(--text-primary)",
+                }}
               >
                 {combinations.map((combo) => (
                   <option
@@ -607,8 +617,8 @@ const DEMO_DATASETS = [
     badge: "📂",
     badgeColor: "#ECFDF5",
     name: "Multiple CSV Files",
-    desc: "Uses complaints.csv, customers.csv, support_tickets.csv, and transactions.csv from the data2 folder.",
-    meta: "4 files",
+    desc: "Uses all other CSV files from the data2 folder.",
+    meta: "Multiple files",
   },
 ];
 
@@ -643,7 +653,7 @@ export default function Home() {
 
     try {
       const response = await fetch(`${apiBase}/upload/demo?dataset=${demoId}`);
-      
+
       if (!response.ok) {
         const error = await readApiError(response);
         setUploadError(error);
@@ -653,22 +663,25 @@ export default function Home() {
       }
 
       const result = await response.json();
-      
+
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(DATASET_FROM_UPLOAD_KEY, "1");
       }
-      
+
       setProfilingStatus("profiling");
       setProfilingEvents([
-        { message: `Loading demo dataset: ${demoId} (${result.files.join(", ")})...`, status: "info" },
+        {
+          message: `Loading demo dataset: ${demoId} (${result.files.join(", ")})...`,
+          status: "info",
+        },
       ]);
-      
+
       const eventSource = new EventSource(`${apiBase}/profiling/stream`);
-      
+
       eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data) as ProfilingEvent;
         setProfilingEvents((prev) => [...prev, data]);
-        
+
         if (data.status === "completed" || data.status === "error") {
           eventSource.close();
           if (data.status === "completed") {
@@ -684,7 +697,7 @@ export default function Home() {
           setUploading(false);
         }
       };
-      
+
       eventSource.onerror = () => {
         eventSource.close();
         setProfilingStatus("error");

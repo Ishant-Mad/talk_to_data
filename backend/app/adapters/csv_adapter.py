@@ -16,6 +16,10 @@ class CSVAdapter(DataAdapter):
         self._con = duckdb.connect()
         self._init_duckdb_views()
 
+    def reset_cache(self) -> None:
+        """Reset the cache (no-op for CSVAdapter, but required by API interface)."""
+        pass
+
     def _init_duckdb_views(self) -> None:
         """Create views in DuckDB for each CSV file in the data directory."""
         if not os.path.exists(self._data_dir):

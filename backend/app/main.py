@@ -197,7 +197,7 @@ def upload_demo(dataset: str) -> Dict[str, object]:
     if dataset == "single":
         files_to_copy = ["business_data.csv"]
     else:
-        files_to_copy = ["complaints.csv", "customers.csv", "support_tickets.csv", "transactions.csv"]
+        files_to_copy = [f for f in os.listdir(DATA_SOURCE) if f.endswith(".csv") and f != "business_data.csv"]
         
     copied_files = []
     for filename in files_to_copy:
