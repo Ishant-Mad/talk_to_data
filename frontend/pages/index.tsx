@@ -427,313 +427,253 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="page">
-          {(profilingStatus === "checking" || profilingStatus === "running") && (
-            <div className="overlay">
-              <div className="overlay-card">
-                <div className="kicker">Profiler</div>
-                <h2>Indexing dataset</h2>
-                <p>
-                  Streaming scan across uploaded files: column inference, time axes,
-                  measures, and dimensions. One-time per fingerprint.
+        <main className="page" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {!exploreReady && (
+            <>
+              <section className="hero" style={{ marginTop: "80px" }}>
+                <p className="hero__kicker">Dataset operations</p>
+                <h1>Ingest, profile, and interrogate structured data</h1>
+                <p className="hero__lede">
+                  CSV-first pipeline: live profiling feeds schema context to planning and
+                  retrieval. Responses are grounded in computed aggregates, not guesses.
                 </p>
-                <div className="progress-grid">
-                  {profilingEvents.length === 0 && (
-                    <div className="progress-row">
-                      <span>Awaiting stream</span>
-                      <span className="muted">—</span>
+                <div className="upload-box">
+                  <label className="upload-drop">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      multiple
+                      onChange={async (event) => {
+                        const files = event.target.files;
+                        if (!files || files.length === 0) {
+                          return;
+                        }
+                        setUploading(true);
+                        setUploadError(null);
+                        setCharts([]);
+                        setSchema(null);
+                        setLoading(true);
+                        try {
+                          const formData = new FormData();
+                          Array.from(files).forEach((file) =>
+                            formData.append("files", file),
+                          );
+                          const response = await fetch(`${apiBase}/upload`, {
+                            method: "POST",
+                            body: formData,
+                          });
+                          if (!response.ok) {
+                            throw new Error(await readApiError(response));
+                          }
+                          window.sessionStorage.setItem(DATASET_FROM_UPLOAD_KEY, "1");
+                          setExploreReady(true);
+                          setProfilingStatus("checking");
+                          setProfilingEvents([]);
+                          setStreamKey((prev) => prev + 1);
+                        } catch (error) {
+                          const message =
+                            error instanceof Error ? error.message : "Upload failed.";
+                          setUploadError(message);
+                          setLoading(false);
+                        } finally {
+                          setUploading(false);
+                        }
+                      }}
+                    />
+                    <span>
+                      {uploading
+                        ? "Uploading…"
+                        : "Drop CSV files here or click to select · multiple files supported"}
+                    </span>
+                  </label>
+                  {uploadError && <div className="chat-error">{uploadError}</div>}
+                </div>
+              </section>
+            </>
+          )}
+
+          {exploreReady && (
+            <div className="split-screen split-screen--active">
+              {/* Left Panel: Profiling Log -> Chat UI */}
+              <div className="split-screen__left">
+                {profilingStatus !== "done" ? (
+                  <>
+                    <h2 style={{ fontSize: "1.1rem", margin: 0 }}>System Profiler</h2>
+                    <p className="muted" style={{ marginBottom: "8px", fontSize: "0.85rem" }}>
+                      Analysing dataset shape and constructing schema...
+                    </p>
+                    <div className="split-screen__scroll-area profiling-log">
+                      {profilingEvents.map((event, index) => {
+                        const isDone = event.status === "completed";
+                        return (
+                          <div
+                            key={`${event.table ?? "event"}-${index}`}
+                            className={`profiling-log__entry ${isDone ? "profiling-log__entry--done" : ""}`}
+                          >
+                            <div className="profiling-log__header">
+                              <span>{event.file || event.table || "Telemetry"}</span>
+                              <span>{event.status}</span>
+                            </div>
+                            <div className="profiling-log__body">
+                              {event.rows_scanned && <span>Scanning {event.rows_scanned} records</span>}
+                              {event.feature && <span>· Detected: {event.feature}</span>}
+                              {event.message && <span>· {event.message}</span>}
+                            </div>
+                            {event.samples && event.samples.length > 0 && (
+                              <div className="profiling-log__samples">
+                                {event.samples.map((sample, sampleIndex) => (
+                                  <span key={`${sample}-${sampleIndex}`} className="progress-chip">
+                                    {sample}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                  {profilingEvents.map((event, index) => (
-                    <div
-                      key={`${event.table ?? "event"}-${index}`}
-                      className="progress-row"
-                    >
-                      <span>{event.file || event.table || "Profiler"}</span>
-                      <span className="muted">
-                        {event.status}
-                        {event.rows_scanned ? ` · ${event.rows_scanned} rows` : ""}
-                      </span>
-                      {event.feature && event.samples && event.samples.length > 0 && (
-                        <div className="progress-samples">
-                          <span className="muted">{event.feature}</span>
-                          {event.samples.map((sample, sampleIndex) => (
-                            <span key={`${sample}-${sampleIndex}`} className="progress-chip">
-                              {sample}
-                            </span>
-                          ))}
+                  </>
+                ) : (
+                  <section className="chat-panel" aria-labelledby="analyst-heading">
+                    <div className="chat-header">
+                      <div>
+                        <p className="section__title" id="analyst-heading">Analyst</p>
+                        <h2 style={{ fontSize: "1.1rem", margin: 0 }}>Natural language query</h2>
+                      </div>
+                    </div>
+                    <div className="chat-body" style={{ border: "none" }}>
+                      <div className="split-screen__scroll-area" style={{ padding: "0 8px 16px 0" }}>
+                        {chatResponse ? (
+                          <div className="chat-message">
+                            <strong>Summary</strong>
+                            <br />
+                            {chatResponse.summary}
+                            <div className="chat-meta">Confidence · {chatResponse.confidence}</div>
+                            {chatResponse.data_source && (
+                              <div className="chat-meta chat-meta--tight">
+                                Provenance · {chatResponse.data_source}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="chat-message">
+                            Submit a question to receive a structured answer. Figures are computed from your CSVs.
+                          </div>
+                        )}
+                        {chatResponse?.chart?.data?.length ? (
+                          <div style={{ marginTop: "16px", height: "300px" }}>
+                            <ChartViz chart={chatResponse.chart} />
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="chat-input" style={{ borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
+                      <input
+                        type="text"
+                        placeholder="e.g. Sum volume by region for Q1"
+                        value={question}
+                        disabled={chatLoading}
+                        onChange={(event) => setQuestion(event.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !chatLoading && question.trim()) {
+                            e.preventDefault();
+                            document.getElementById('ttd-btn-execute')?.click();
+                          }
+                        }}
+                      />
+                      <button
+                        id="ttd-btn-execute"
+                        type="button"
+                        disabled={chatLoading || !question.trim()}
+                        onClick={async () => {
+                          setChatLoading(true);
+                          setChatError(null);
+                          try {
+                            const response = await fetch(`${apiBase}/chat`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ question: question.trim() }),
+                            });
+                            if (!response.ok) throw new Error(await readApiError(response));
+                            const payload = (await response.json()) as ChatResponse;
+                            if (!payload?.summary) throw new Error("Agent response was incomplete.");
+                            setChatResponse(payload);
+                          } catch (error) {
+                            setChatError(error instanceof Error ? error.message : "Could not reach the data agent right now.");
+                          } finally {
+                            setChatLoading(false);
+                          }
+                        }}
+                      >
+                        {chatLoading ? "Running…" : "Execute"}
+                      </button>
+                    </div>
+                    {chatError && <div className="chat-error">{chatError}</div>}
+                  </section>
+                )}
+              </div>
+
+              {/* Right Panel: Schema Loading -> Signals */}
+              <div className="split-screen__right">
+                {profilingStatus !== "done" || loading ? (
+                  <div className="schema-building">
+                    <div><span className="pulse-loader"></span><span className="pulse-loader" style={{animationDelay: "0.2s"}}></span><span className="pulse-loader" style={{animationDelay: "0.4s"}}></span></div>
+                    <h3 style={{ marginTop: "24px" }}>Inferring Schema & Generating Signals</h3>
+                    <p style={{ maxWidth: "260px" }}>LLM is currently inspecting columns, grouping data structures, and generating relevant dashboard charts...</p>
+                  </div>
+                ) : (
+                  <>
+                    <h2 style={{ fontSize: "1.1rem", margin: 0 }}>Signals & Schema</h2>
+                    <div className="split-screen__scroll-area">
+                      {schema?.tables && Object.keys(schema.tables).length > 0 && (
+                         <div className="schema-body" style={{ marginBottom: "24px" }}>
+                           {Object.entries(schema.tables).map(([tableName, table]) => (
+                             <div key={tableName} className="schema-table" style={{ background: "var(--bg-inset)" }}>
+                               <div className="schema-title">
+                                 <span>{tableName}</span>
+                                 <span className="muted">{(table.row_count ?? 0).toLocaleString()} rows</span>
+                               </div>
+                               <div className="schema-columns">
+                                 {table.columns &&
+                                   Object.entries(table.columns)
+                                     .slice(0, 12)
+                                     .map(([colName, col]) => (
+                                       <div key={colName} className="schema-chip" style={{ background: "var(--bg-panel)" }}>
+                                         {colName}
+                                         <span className="muted">{col.inferred_type || "unknown"}</span>
+                                       </div>
+                                     ))}
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                      )}
+                      
+                      <div className="grid">
+                        {charts.map((item, index) => (
+                          <article key={`${item.title}-${index}`} className="card" style={{ height: "350px", display: "flex", flexDirection: "column" }}>
+                            <h3>{item.title}</h3>
+                            {item.description && <p className="hint">{item.description}</p>}
+                            <div style={{ flex: 1, minHeight: 0 }}>
+                              <ChartViz chart={item.chart} />
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                      
+                      {!hasCharts && (
+                        <div className="card">
+                          <h3>No panels returned</h3>
+                          <p className="hint">The planner returned no chart specs. Check schema or try another upload.</p>
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
-                <div className="progress-footer">
-                  <span className="callout">Live telemetry</span>
-                  <span className="muted">{profilingStatus}</span>
-                </div>
+                  </>
+                )}
               </div>
             </div>
           )}
-
-          {profilingStatus === "error" && (
-            <div className="overlay">
-              <div className="overlay-card">
-                <div className="kicker">Profiler</div>
-                <h2>Calibration failed</h2>
-                <p className="muted">{profilingError || "Unknown error"}</p>
-              </div>
-            </div>
-          )}
-
-          <nav className="pipeline" aria-label="Workflow">
-            {PIPELINE.map((step, index) => (
-              <div
-                key={step.num}
-                className={
-                  "pipeline__step" +
-                  (index === currentPhase ? " pipeline__step--active" : "")
-                }
-              >
-                <span className="pipeline__num">{step.num}</span>
-                <span className="pipeline__label">{step.label}</span>
-                <span className="pipeline__detail">{step.detail}</span>
-              </div>
-            ))}
-          </nav>
-
-          <section className="hero">
-            <p className="hero__kicker">Dataset operations</p>
-            <h1>Ingest, profile, and interrogate structured data</h1>
-            <p className="hero__lede">
-              CSV-first pipeline: live profiling feeds schema context to planning and
-              retrieval. Responses are grounded in computed aggregates, not guesses.
-            </p>
-            <div className="upload-box">
-              <label className="upload-drop">
-                <input
-                  type="file"
-                  accept=".csv"
-                  multiple
-                  onChange={async (event) => {
-                    const files = event.target.files;
-                    if (!files || files.length === 0) {
-                      return;
-                    }
-                    setUploading(true);
-                    setUploadError(null);
-                    setCharts([]);
-                    setSchema(null);
-                    setLoading(true);
-                    try {
-                      const formData = new FormData();
-                      Array.from(files).forEach((file) =>
-                        formData.append("files", file),
-                      );
-                      const response = await fetch(`${apiBase}/upload`, {
-                        method: "POST",
-                        body: formData,
-                      });
-                      if (!response.ok) {
-                        throw new Error(await readApiError(response));
-                      }
-                      window.sessionStorage.setItem(DATASET_FROM_UPLOAD_KEY, "1");
-                      setExploreReady(true);
-                      setProfilingStatus("checking");
-                      setProfilingEvents([]);
-                      setStreamKey((prev) => prev + 1);
-                    } catch (error) {
-                      const message =
-                        error instanceof Error ? error.message : "Upload failed.";
-                      setUploadError(message);
-                      setLoading(false);
-                    } finally {
-                      setUploading(false);
-                    }
-                  }}
-                />
-                <span>
-                  {uploading
-                    ? "Uploading…"
-                    : "Drop CSV files here or click to select · multiple files supported"}
-                </span>
-              </label>
-              {uploadError && <div className="chat-error">{uploadError}</div>}
-            </div>
-          </section>
-
-          <section className="section" aria-labelledby="signals-heading">
-            <div className="section__head">
-              <div>
-                <p className="section__title" id="signals-heading">
-                  Signals
-                </p>
-                <h2 className="section__subtitle">Auto-generated views</h2>
-              </div>
-              {exploreReady ? (
-                <span className="badge badge--accent">
-                  {hasCharts ? `${charts.length} panels` : "Planner idle"}
-                </span>
-              ) : (
-                <span className="badge">Locked until ingest</span>
-              )}
-            </div>
-            <div className="grid">
-              {hasCharts ? (
-                charts.map((item, index) => (
-                  <article key={`${item.title}-${index}`} className="card">
-                    <span className="card__meta">Visualization</span>
-                    <h3>{item.title}</h3>
-                    {item.description && <p className="hint">{item.description}</p>}
-                    <ChartViz chart={item.chart} />
-                  </article>
-                ))
-              ) : (
-                <div className="card">
-                  <span className="card__meta">Empty state</span>
-                  <h3>{exploreReady ? "No panels returned" : "Ingest required"}</h3>
-                  <p className="hint">
-                    {exploreReady
-                      ? "The planner returned no chart specs. Verify API keys, schema quality, or try another upload."
-                      : "Server-side sample data is not surfaced in the workspace. Upload your CSVs to bind this session and generate signals."}
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="chat-panel" aria-labelledby="analyst-heading">
-            <div className="chat-header">
-              <div>
-                <p className="section__title" id="analyst-heading">
-                  Analyst
-                </p>
-                <h2>Natural language query</h2>
-              </div>
-              <span className={exploreReady ? "badge badge--accent" : "badge"}>
-                {exploreReady ? "Tools online" : "Disabled"}
-              </span>
-            </div>
-            {!exploreReady && (
-              <p className="chat-gate-hint">
-                Bind a dataset through ingest above. The analyst only operates on your
-                uploaded files in this browser session.
-              </p>
-            )}
-            <div className="chat-body">
-              {chatResponse ? (
-                <div className="chat-message">
-                  <strong>Summary</strong>
-                  <br />
-                  {chatResponse.summary}
-                  <div className="chat-meta">Confidence · {chatResponse.confidence}</div>
-                  {(chatResponse.confidence || "").toLowerCase() === "low" && (
-                    <div className="chat-error chat-error--inline">
-                      Low confidence. Narrow by table, metric, and time window.
-                    </div>
-                  )}
-                  {chatResponse.data_source && (
-                    <div className="chat-meta chat-meta--tight">
-                      Provenance · {chatResponse.data_source}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="chat-message">
-                  Submit a question to receive a structured answer with optional chart
-                  payload. All figures are computed from your CSVs.
-                </div>
-              )}
-            </div>
-            {chatResponse?.chart?.data?.length ? (
-              <ChartViz chart={chatResponse.chart} />
-            ) : null}
-            <div className="chat-input">
-              <input
-                type="text"
-                placeholder={
-                  exploreReady
-                    ? "e.g. Sum volume by region for Q1"
-                    : "Complete ingest to enable queries"
-                }
-                value={question}
-                disabled={!exploreReady}
-                onChange={(event) => setQuestion(event.target.value)}
-              />
-              <button
-                type="button"
-                disabled={!exploreReady || chatLoading || !question.trim()}
-                onClick={async () => {
-                  setChatLoading(true);
-                  setChatError(null);
-                  try {
-                    const response = await fetch(`${apiBase}/chat`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ question: question.trim() }),
-                    });
-                    if (!response.ok) {
-                      throw new Error(await readApiError(response));
-                    }
-                    const payload = (await response.json()) as ChatResponse;
-                    if (!payload?.summary) {
-                      throw new Error("Agent response was incomplete.");
-                    }
-                    setChatResponse(payload);
-                  } catch (error) {
-                    const message =
-                      error instanceof Error
-                        ? error.message
-                        : "Could not reach the data agent right now.";
-                    setChatError(message);
-                  } finally {
-                    setChatLoading(false);
-                  }
-                }}
-              >
-                {chatLoading ? "Running…" : "Execute"}
-              </button>
-            </div>
-            {chatError && <div className="chat-error">{chatError}</div>}
-          </section>
-
-          {exploreReady && schema?.tables && Object.keys(schema.tables).length > 0 && (
-            <section className="schema-panel" aria-labelledby="lineage-heading">
-              <div className="schema-header">
-                <div>
-                  <p className="section__title" id="lineage-heading">
-                    Lineage
-                  </p>
-                  <h2>Profiler output</h2>
-                </div>
-                <span className="badge badge--signal">Schema snapshot</span>
-              </div>
-              <div className="schema-body">
-                {Object.entries(schema.tables).map(([tableName, table]) => (
-                  <div key={tableName} className="schema-table">
-                    <div className="schema-title">
-                      <span>{tableName}</span>
-                      <span className="muted">{(table.row_count ?? 0).toLocaleString()} rows</span>
-                    </div>
-                    <div className="schema-columns">
-                      {table.columns &&
-                        Object.entries(table.columns)
-                          .slice(0, 12)
-                          .map(([colName, col]) => (
-                            <div key={colName} className="schema-chip">
-                              {colName}
-                              <span className="muted">{col.inferred_type || "unknown"}</span>
-                            </div>
-                          ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {loading && exploreReady && (
-            <p className="loading-footnote">Loading dashboard specification…</p>
-          )}
+          
         </main>
       </div>
     </>

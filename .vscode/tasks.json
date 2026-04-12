@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend",
+      "type": "shell",
+      "osx": {
+        "command": "if [ ! -d \".venv\" ]; then python3 -m venv .venv; fi && source .venv/bin/activate && cd backend && pip install -r requirements.txt && python -m uvicorn app.main:app --reload --port 8000"
+      },
+      "linux": {
+        "command": "if [ ! -d \".venv\" ]; then python3 -m venv .venv; fi && source .venv/bin/activate && cd backend && pip install -r requirements.txt && python -m uvicorn app.main:app --reload --port 8000"
+      },
+      "windows": {
+        "command": "if (!(Test-Path \".venv\")) { python -m venv .venv } ; .\\.venv\\Scripts\\activate ; cd backend ; pip install -r requirements.txt ; python -m uvicorn app.main:app --reload --port 8000"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "shared",
+        "group": "servers",
+        "clear": true
+      }
+    },
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "cd frontend && npm install && npm run dev",
+      "isBackground": true,
+      "presentation": {
+        "panel": "shared",
+        "group": "servers",
+        "clear": true
+      }
+    },
+    {
+      "label": "Run Project (Split Terminals)",
+      "dependsOn": ["Start Backend", "Start Frontend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

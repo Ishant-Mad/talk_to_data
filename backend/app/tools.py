@@ -17,7 +17,31 @@ def filter_data(
     date_range: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, object]]:
     logger = get_logger("talk_to_data.tools")
-    rows = adapter.filter(table=table, filters=filters, date_range=date_range)
+    
+    where_clauses = []
+    if filters:
+        for k, v in filters.items():
+            if isinstance(v, str):
+                where_clauses.append(f"{k} = '{v}'")
+            else:
+                where_clauses.append(f"{k} = {v}")
+                
+    if date_range:
+        # Assuming date_range has 'start' and 'end' and 'column'
+        col = date_range.get("column", "date")
+        start = date_range.get("start")
+        end = date_range.get("end")
+        if start:
+            where_clauses.append(f"{col} >= '{start}'")
+        if end:
+            where_clauses.append(f"{col} <= '{end}'")
+            
+    where_sql = " AND ".join(where_clauses)
+    query = f"SELECT * FROM {table}"
+    if where_sql:
+        query += f" WHERE {where_sql}"
+        
+    rows = adapter.execute_sql(query) if hasattr(adapter, "execute_sql") else []
     logger.info("filter_data rows=%s", len(rows))
     return rows[:500]
 
@@ -31,13 +55,37 @@ def aggregate(
     date_range: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, object]]:
     logger = get_logger("talk_to_data.tools")
-    rows = adapter.aggregate(
-        table=table,
-        metric=metric,
-        group_by=group_by,
-        operation=operation,
-        date_range=date_range,
-    )
+    
+    op = operation.upper() if operation else "SUM"
+    select_parts = []
+    if group_by:
+        select_parts.append(f"{group_by}")
+    
+    if metric:
+        select_parts.append(f"{op}({metric}) AS value")
+    else:
+        select_parts.append("COUNT(*) AS value")
+        
+    query = f"SELECT {', '.join(select_parts)} FROM {table}"
+    
+    where_clauses = []
+    if date_range:
+        col = date_range.get("column", "date")
+        start = date_range.get("start")
+        end = date_range.get("end")
+        if start:
+            where_clauses.append(f"{col} >= '{start}'")
+        if end:
+            where_clauses.append(f"{col} <= '{end}'")
+            
+    if where_clauses:
+        query += " WHERE " + " AND ".join(where_clauses)
+        
+    if group_by:
+        query += f" GROUP BY {group_by}"
+        query += f" ORDER BY value DESC"
+        
+    rows = adapter.execute_sql(query) if hasattr(adapter, "execute_sql") else []
     logger.info("aggregate rows=%s", len(rows))
     return rows[:200]
 

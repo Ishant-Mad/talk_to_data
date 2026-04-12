@@ -144,6 +144,185 @@ a:hover {
   flex-direction: column;
 }
 
+/* —— Split Screen UI —— */
+.split-screen {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px 32px;
+  flex: 1;
+}
+
+.split-screen--active {
+  display: grid;
+}
+
+.split-screen__left,
+.split-screen__right {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100vh - 120px); /* Fill remaining height */
+  overflow: hidden; /* Manage internal scroll */
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.split-screen__scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Animated profiling log (left panel) */
+.profiling-log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.profiling-log__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  animation: slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-left: 3px solid var(--accent);
+}
+
+.profiling-log__entry--done {
+  border-left-color: var(--signal);
+}
+
+.profiling-log__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.profiling-log__body {
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.profiling-log__samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loader animations */
+.pulse-loader {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  animation: pulse 1.5s infinite ease-in-out;
+  margin-right: 8px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+.schema-building {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  text-align: center;
+  animation: fade-in 1s ease-in;
+}
+
+.schema-building h3 {
+  color: var(--text);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Overrides for embedded chat and signals */
+.split-screen .chat-panel {
+  flex: 1;
+  max-width: none;
+  margin: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-screen .chat-body {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+
+.split-screen .section {
+  padding: 0;
+  max-width: none;
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.split-screen .grid {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  align-content: flex-start;
+}
+
+@media (max-width: 1024px) {
+  .split-screen {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .split-screen__left,
+  .split-screen__right {
+    height: 600px;
+  }
+}
+
 .top-bar {
   position: sticky;
   top: 0;

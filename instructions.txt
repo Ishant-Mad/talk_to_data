@@ -1,0 +1,52 @@
+===============================================
+HOW TO RUN THIS PROJECT IN VS CODE
+===============================================
+
+This project is fully designed and configured to run natively inside Visual Studio Code 
+across all operating systems (macOS, Linux, and Windows) with zero hassle.
+
+PREREQUISITES:
+- Python (3.9+)
+- Node.js
+- Visual Studio Code
+
+-----------------------------------------------
+⭐ OPTION 1: THE EASY WAY (VS CODE TASKS) 
+-----------------------------------------------
+We have configured a one-click automated task that will set up your environment, 
+and automatically start both the backend and frontend in split terminal windows 
+right here in VS Code!
+
+1. Open the VS Code Command Palette:
+   - Mac: Cmd + Shift + P
+   - Windows/Linux: Ctrl + Shift + P
+2. Type "Tasks: Run Task" and press Enter.
+3. Select "Run Project (Split Terminals)".
+
+That's it! VS Code will automatically start FastAPI in one pane and Next.js in the other.
+To stop them, just click the trash can icon in the terminal panes.
+
+-----------------------------------------------
+💻 OPTION 2: USING THE INTEGRATED TERMINAL
+-----------------------------------------------
+If you prefer running scripts manually using the VS Code Integrated Terminal 
+(Ctrl+` or Cmd+`), we provide two helper scripts:
+
+- setup.sh : Installs dependencies (Run ONLY the first time you clone the repo).
+- start.sh : Starts both servers in the background.
+
+For macOS / Linux:
+1. Open a new Integrated Terminal in VS Code.
+2. Give execution permissions (first time only):
+   chmod +x setup.sh start.sh
+3. Setup dependencies:
+   ./setup.sh
+4. Start the app:
+   ./start.sh
+
+For Windows:
+1. Open a new Integrated Terminal in VS Code and switch your default terminal profile to "Git Bash" (instead of cmd/PowerShell).
+2. Setup dependencies:
+   ./setup.sh
+3. Start the app:
+   ./start.sh
