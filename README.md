@@ -4,7 +4,8 @@
 <img src="docs/logo.png" alt="Talk to Data" width="72" height="72" />
  
 # Talk to Data
- 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://talk-to-data-frontend-dhcc.onrender.com/)
+
 **Ask questions. Get answers. No SQL required.**
  
 An intelligent analytics platform that turns natural language into insights, charts, and dashboards — powered by LLMs and in-memory SQL. Built for business analysts, ops teams, and anyone who needs answers from data without writing code.
@@ -13,7 +14,7 @@ An intelligent analytics platform that turns natural language into insights, cha
 <img src="docs/demo.gif" alt="Product demo" width="680" />
  
 <br/>
- 
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=nextdotjs)
 ![DuckDB](https://img.shields.io/badge/DuckDB-in--memory-yellow?style=flat-square)
