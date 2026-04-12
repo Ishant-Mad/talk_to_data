@@ -24,6 +24,9 @@
       "label": "Start Frontend",
       "type": "shell",
       "command": "cd frontend && npm install && npm run dev",
+      "windows": {
+        "command": "cd frontend ; npm install ; npm run dev"
+      },
       "isBackground": true,
       "presentation": {
         "panel": "shared",

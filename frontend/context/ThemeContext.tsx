@@ -33,7 +33,7 @@ export function applyDomTheme(mode: ThemeMode) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("dark");
+  const [theme, setThemeState] = useState<ThemeMode>("light");
 
   useLayoutEffect(() => {
     try {
@@ -42,10 +42,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setThemeState(stored);
         applyDomTheme(stored);
       } else {
-        applyDomTheme("dark");
+        applyDomTheme("light");
       }
     } catch {
-      applyDomTheme("dark");
+      applyDomTheme("light");
     }
   }, []);
 
