@@ -50,7 +50,7 @@ def aggregate(
     adapter: DataAdapter,
     table: str,
     metric: str,
-    group_by: Optional[str],
+    group_by: Optional[object],
     operation: str,
     date_range: Optional[Dict[str, str]] = None,
 ) -> List[Dict[str, object]]:
@@ -58,8 +58,17 @@ def aggregate(
     
     op = operation.upper() if operation else "SUM"
     select_parts = []
+    
+    # Normalize group_by
+    group_by_cols = []
     if group_by:
-        select_parts.append(f"{group_by}")
+        if isinstance(group_by, list):
+            group_by_cols = [str(g) for g in group_by]
+        elif isinstance(group_by, str):
+            group_by_cols = [group_by]
+        
+    for g in group_by_cols:
+        select_parts.append(g)
     
     if metric:
         select_parts.append(f"{op}({metric}) AS value")
@@ -69,7 +78,7 @@ def aggregate(
     query = f"SELECT {', '.join(select_parts)} FROM {table}"
     
     where_clauses = []
-    if date_range:
+    if date_range and isinstance(date_range, dict):
         col = date_range.get("column", "date")
         start = date_range.get("start")
         end = date_range.get("end")
@@ -81,9 +90,14 @@ def aggregate(
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
         
-    if group_by:
-        query += f" GROUP BY {group_by}"
-        query += f" ORDER BY value DESC"
+    if group_by_cols:
+        group_by_sql = ", ".join(group_by_cols)
+        query += f" GROUP BY {group_by_sql}"
+        first_group = group_by_cols[0].lower()
+        if first_group in ("date", "month", "year", "week_of_year", "timestamp", "created_at") or "date" in first_group:
+            query += f" ORDER BY {group_by_sql} ASC"
+        else:
+            query += f" ORDER BY value DESC"
         
     rows = adapter.execute_sql(query) if hasattr(adapter, "execute_sql") else []
     logger.info("aggregate rows=%s", len(rows))

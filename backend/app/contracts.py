@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 ConfidenceLevel = Literal["high", "medium", "low"]
@@ -42,25 +42,37 @@ class ChatResponse(BaseModel):
     chart: ChartSpec
     confidence: ConfidenceLevel
 
+    @field_validator("confidence", mode="before")
+    def _lower_confidence(cls, v: Any) -> Any:
+        return v.lower() if isinstance(v, str) else v
+
 
 class ChartQuery(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     table: str
     metric: str
-    operation: Literal["sum", "avg", "mean", "count"]
-    group_by: Optional[str] = None
-    date_range: Optional[DateRange] = None
-    limit: int = 24
+    operation: str = "sum"
+    group_by: Optional[Any] = None
+    date_range: Optional[Any] = None
+    limit: Optional[int] = 24
+
+
+class LogicalPair(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    x: str
+    y: str
+    operation: Literal["sum", "avg", "mean", "count"] = "sum"
 
 
 class ChartPlanItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     title: str
     description: Optional[str] = None
     chart: ChartSpec
     query: ChartQuery
+    valid_combinations: List[LogicalPair] = Field(default_factory=list)
 
 
 class ChartPlanResponse(BaseModel):

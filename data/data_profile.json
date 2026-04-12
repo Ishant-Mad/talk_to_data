@@ -1,274 +1,38 @@
 {
-  "dataset_fingerprint": "815ae4f7261517efdbb11413de46d754ae049c35b4917d46e5166e1e43b715b3",
-  "generated_at": "2026-04-12T08:04:47.558522Z",
+  "dataset_fingerprint": "5dbc591a5f3ac532378c92cce0a770e45464bdc9c46c0f44cc51767cbe0509b5",
+  "generated_at": "2026-04-12T12:58:41.263268Z",
   "tables": {
-    "complaints": {
-      "name": "complaints",
-      "file_path": "/Users/ishantmadaan/Projects/Natwest-talk_to_data/data/complaints.csv",
-      "row_count": 2959,
+    "khushi": {
+      "name": "khushi",
+      "file_path": "/Users/ishantmadaan/Projects/Natwest-talk_to_data/data/khushi.csv",
+      "row_count": 24,
       "inferred_time_column": "date",
       "measures": [
-        "volume",
-        "week_of_year",
-        "month",
-        "quarter"
+        "revenue",
+        "orders",
+        "customers",
+        "ad_spend",
+        "returns"
       ],
       "dimensions": [
-        "complaint_id",
-        "customer_id",
         "region",
-        "category",
-        "channel",
-        "segment"
+        "product",
+        "channel"
       ],
-      "id_columns": [
-        "complaint_id",
-        "customer_id"
-      ],
+      "id_columns": [],
       "columns": {
         "date": {
           "name": "date",
           "inferred_type": "date",
           "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 365,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "2024-04-22",
-            "2024-10-10",
-            "2024-09-30",
-            "2024-06-08",
-            "2024-04-20",
-            "2024-01-08",
-            "2024-04-06",
-            "2024-06-03",
-            "2024-07-16",
-            "2024-10-03"
-          ],
-          "high_cardinality": false
-        },
-        "complaint_id": {
-          "name": "complaint_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "CP200000",
-            "CP200001",
-            "CP200002",
-            "CP200003",
-            "CP200004",
-            "CP200005",
-            "CP200006",
-            "CP200007",
-            "CP200008",
-            "CP200009"
-          ],
-          "high_cardinality": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "C100912",
-            "C102112",
-            "C102444",
-            "C105078",
-            "C107117",
-            "C105097",
-            "C101484",
-            "C103972",
-            "C100212",
-            "C101695"
-          ],
-          "high_cardinality": true
-        },
-        "region": {
-          "name": "region",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "South",
-            "East",
-            "West",
-            "North"
-          ],
-          "high_cardinality": false
-        },
-        "category": {
-          "name": "category",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "Login",
-            "Fees",
-            "Card",
-            "Service"
-          ],
-          "high_cardinality": false
-        },
-        "channel": {
-          "name": "channel",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
+          "total_count": 24,
           "unique_count": 3,
           "min_value": null,
           "max_value": null,
           "sample_values": [
-            "CallCenter",
-            "Branch",
-            "Digital"
-          ],
-          "high_cardinality": false
-        },
-        "volume": {
-          "name": "volume",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 1,
-          "min_value": 1.0,
-          "max_value": 1.0,
-          "sample_values": [],
-          "high_cardinality": false
-        },
-        "segment": {
-          "name": "segment",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "56+",
-            "18-25",
-            "26-40",
-            "41-55"
-          ],
-          "high_cardinality": false
-        },
-        "week_of_year": {
-          "name": "week_of_year",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 52,
-          "min_value": 1.0,
-          "max_value": 52.0,
-          "sample_values": [],
-          "high_cardinality": false
-        },
-        "month": {
-          "name": "month",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 12,
-          "min_value": 1.0,
-          "max_value": 12.0,
-          "sample_values": [],
-          "high_cardinality": false
-        },
-        "quarter": {
-          "name": "quarter",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 2959,
-          "unique_count": 4,
-          "min_value": 1.0,
-          "max_value": 4.0,
-          "sample_values": [],
-          "high_cardinality": false
-        }
-      }
-    },
-    "customers": {
-      "name": "customers",
-      "file_path": "/Users/ishantmadaan/Projects/Natwest-talk_to_data/data/customers.csv",
-      "row_count": 8000,
-      "inferred_time_column": "join_date",
-      "measures": [],
-      "dimensions": [
-        "customer_id",
-        "segment",
-        "age_band",
-        "region",
-        "primary_channel"
-      ],
-      "id_columns": [
-        "customer_id"
-      ],
-      "columns": {
-        "customer_id": {
-          "name": "customer_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 8000,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "C100000",
-            "C100001",
-            "C100002",
-            "C100003",
-            "C100004",
-            "C100005",
-            "C100006",
-            "C100007",
-            "C100008",
-            "C100009"
-          ],
-          "high_cardinality": true
-        },
-        "segment": {
-          "name": "segment",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 8000,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "41-55",
-            "26-40",
-            "56+",
-            "18-25"
-          ],
-          "high_cardinality": false
-        },
-        "age_band": {
-          "name": "age_band",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 8000,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "41-55",
-            "26-40",
-            "56+",
-            "18-25"
+            "2024-01-01",
+            "2024-02-01",
+            "2024-03-01"
           ],
           "high_cardinality": false
         },
@@ -276,490 +40,98 @@
           "name": "region",
           "inferred_type": "categorical",
           "missing_count": 0,
-          "total_count": 8000,
+          "total_count": 24,
           "unique_count": 4,
           "min_value": null,
           "max_value": null,
           "sample_values": [
-            "South",
-            "West",
             "North",
-            "East"
-          ],
-          "high_cardinality": false
-        },
-        "join_date": {
-          "name": "join_date",
-          "inferred_type": "date",
-          "missing_count": 0,
-          "total_count": 8000,
-          "unique_count": 1457,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "2020-09-28",
-            "2023-02-03",
-            "2021-04-30",
-            "2022-02-25",
-            "2023-08-20",
-            "2020-10-01",
-            "2021-09-16",
-            "2020-09-12",
-            "2021-09-30",
-            "2021-03-16"
-          ],
-          "high_cardinality": false
-        },
-        "primary_channel": {
-          "name": "primary_channel",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 8000,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "Branch",
-            "Digital",
-            "CallCenter",
-            "ATM"
-          ],
-          "high_cardinality": false
-        }
-      }
-    },
-    "support_tickets": {
-      "name": "support_tickets",
-      "file_path": "/Users/ishantmadaan/Projects/Natwest-talk_to_data/data/support_tickets.csv",
-      "row_count": 4000,
-      "inferred_time_column": "date",
-      "measures": [
-        "week_of_year",
-        "month",
-        "quarter"
-      ],
-      "dimensions": [
-        "ticket_id",
-        "customer_id",
-        "region",
-        "type",
-        "channel",
-        "segment"
-      ],
-      "id_columns": [
-        "ticket_id",
-        "customer_id"
-      ],
-      "columns": {
-        "date": {
-          "name": "date",
-          "inferred_type": "date",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 366,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "2024-06-20",
-            "2024-11-05",
-            "2024-06-08",
-            "2024-09-03",
-            "2024-06-24",
-            "2024-09-05",
-            "2024-04-27",
-            "2024-06-15",
-            "2024-10-26",
-            "2024-12-17"
-          ],
-          "high_cardinality": false
-        },
-        "ticket_id": {
-          "name": "ticket_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "TK500000",
-            "TK500001",
-            "TK500002",
-            "TK500003",
-            "TK500004",
-            "TK500005",
-            "TK500006",
-            "TK500007",
-            "TK500008",
-            "TK500009"
-          ],
-          "high_cardinality": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "C100491",
-            "C104173",
-            "C107778",
-            "C100122",
-            "C105608",
-            "C103847",
-            "C106750",
-            "C107683",
-            "C107714",
-            "C105044"
-          ],
-          "high_cardinality": true
-        },
-        "region": {
-          "name": "region",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "West",
             "South",
             "East",
-            "North"
+            "West"
           ],
           "high_cardinality": false
         },
-        "type": {
-          "name": "type",
+        "product": {
+          "name": "product",
           "inferred_type": "categorical",
           "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 5,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "AppBug",
-            "Other",
-            "Transfer",
-            "Login",
-            "Card"
-          ],
-          "high_cardinality": false
-        },
-        "resolution_time_hours": {
-          "name": "resolution_time_hours",
-          "inferred_type": "date",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 1816,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "25.01",
-            "17.23",
-            "7.9",
-            "11.5",
-            "15.57",
-            "5.61",
-            "13.4",
-            "19.58",
-            "9.45",
-            "14.51"
-          ],
-          "high_cardinality": false
-        },
-        "channel": {
-          "name": "channel",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 3,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "CallCenter",
-            "Branch",
-            "Digital"
-          ],
-          "high_cardinality": false
-        },
-        "segment": {
-          "name": "segment",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "41-55",
-            "26-40",
-            "18-25",
-            "56+"
-          ],
-          "high_cardinality": false
-        },
-        "week_of_year": {
-          "name": "week_of_year",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 52,
-          "min_value": 1.0,
-          "max_value": 52.0,
-          "sample_values": [],
-          "high_cardinality": false
-        },
-        "month": {
-          "name": "month",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 12,
-          "min_value": 1.0,
-          "max_value": 12.0,
-          "sample_values": [],
-          "high_cardinality": false
-        },
-        "quarter": {
-          "name": "quarter",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 4000,
-          "unique_count": 4,
-          "min_value": 1.0,
-          "max_value": 4.0,
-          "sample_values": [],
-          "high_cardinality": false
-        }
-      }
-    },
-    "transactions": {
-      "name": "transactions",
-      "file_path": "/Users/ishantmadaan/Projects/Natwest-talk_to_data/data/transactions.csv",
-      "row_count": 58871,
-      "inferred_time_column": "date",
-      "measures": [
-        "amount",
-        "week_of_year",
-        "month",
-        "quarter"
-      ],
-      "dimensions": [
-        "transaction_id",
-        "customer_id",
-        "region",
-        "product_type",
-        "channel",
-        "status",
-        "failure_reason"
-      ],
-      "id_columns": [
-        "transaction_id",
-        "customer_id"
-      ],
-      "columns": {
-        "date": {
-          "name": "date",
-          "inferred_type": "date",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 366,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "2024-01-24",
-            "2024-09-02",
-            "2024-08-21",
-            "2024-11-16",
-            "2024-07-29",
-            "2024-09-06",
-            "2024-05-11",
-            "2024-05-22",
-            "2024-05-30",
-            "2024-12-20",
-            "2024-08-24",
-            "2024-08-19",
-            "2024-12-23",
-            "2024-02-29",
-            "2024-11-12"
-          ],
-          "high_cardinality": false
-        },
-        "transaction_id": {
-          "name": "transaction_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "T1000000",
-            "T1000001",
-            "T1000002",
-            "T1000003",
-            "T1000004",
-            "T1000005",
-            "T1000006",
-            "T1000007",
-            "T1000008",
-            "T1000009",
-            "T1010225",
-            "T1020439",
-            "T1030638",
-            "T1040849",
-            "T1051058"
-          ],
-          "high_cardinality": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": null,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "C101149",
-            "C106865",
-            "C107480",
-            "C101247",
-            "C105773",
-            "C101099",
-            "C104766",
-            "C107141",
-            "C102605",
-            "C102249",
-            "C107510",
-            "C104643",
-            "C104598",
-            "C101739",
-            "C101997"
-          ],
-          "high_cardinality": true
-        },
-        "region": {
-          "name": "region",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "South",
-            "West",
-            "North",
-            "East"
-          ],
-          "high_cardinality": false
-        },
-        "product_type": {
-          "name": "product_type",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "Loan",
-            "Card",
-            "Savings",
-            "Insurance"
-          ],
-          "high_cardinality": false
-        },
-        "channel": {
-          "name": "channel",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 4,
-          "min_value": null,
-          "max_value": null,
-          "sample_values": [
-            "Branch",
-            "Digital",
-            "ATM",
-            "CallCenter"
-          ],
-          "high_cardinality": false
-        },
-        "amount": {
-          "name": "amount",
-          "inferred_type": "numeric",
-          "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": null,
-          "min_value": 3.35,
-          "max_value": 267.64,
-          "sample_values": [],
-          "high_cardinality": true
-        },
-        "status": {
-          "name": "status",
-          "inferred_type": "categorical",
-          "missing_count": 0,
-          "total_count": 58871,
+          "total_count": 24,
           "unique_count": 2,
           "min_value": null,
           "max_value": null,
           "sample_values": [
-            "Success",
-            "Failed"
+            "A",
+            "B"
           ],
           "high_cardinality": false
         },
-        "failure_reason": {
-          "name": "failure_reason",
+        "channel": {
+          "name": "channel",
           "inferred_type": "categorical",
-          "missing_count": 58641,
-          "total_count": 58871,
-          "unique_count": 1,
+          "missing_count": 0,
+          "total_count": 24,
+          "unique_count": 2,
           "min_value": null,
           "max_value": null,
           "sample_values": [
-            "CardFailure"
+            "Online",
+            "Offline"
           ],
           "high_cardinality": false
         },
-        "week_of_year": {
-          "name": "week_of_year",
+        "revenue": {
+          "name": "revenue",
           "inferred_type": "numeric",
           "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 52,
-          "min_value": 1.0,
-          "max_value": 52.0,
+          "total_count": 24,
+          "unique_count": 15,
+          "min_value": 6000.0,
+          "max_value": 16000.0,
           "sample_values": [],
           "high_cardinality": false
         },
-        "month": {
-          "name": "month",
+        "orders": {
+          "name": "orders",
           "inferred_type": "numeric",
           "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 12,
-          "min_value": 1.0,
-          "max_value": 12.0,
+          "total_count": 24,
+          "unique_count": 13,
+          "min_value": 120.0,
+          "max_value": 280.0,
           "sample_values": [],
           "high_cardinality": false
         },
-        "quarter": {
-          "name": "quarter",
+        "customers": {
+          "name": "customers",
           "inferred_type": "numeric",
           "missing_count": 0,
-          "total_count": 58871,
-          "unique_count": 4,
-          "min_value": 1.0,
-          "max_value": 4.0,
+          "total_count": 24,
+          "unique_count": 13,
+          "min_value": 100.0,
+          "max_value": 250.0,
+          "sample_values": [],
+          "high_cardinality": false
+        },
+        "ad_spend": {
+          "name": "ad_spend",
+          "inferred_type": "numeric",
+          "missing_count": 0,
+          "total_count": 24,
+          "unique_count": 15,
+          "min_value": 1200.0,
+          "max_value": 3200.0,
+          "sample_values": [],
+          "high_cardinality": false
+        },
+        "returns": {
+          "name": "returns",
+          "inferred_type": "numeric",
+          "missing_count": 0,
+          "total_count": 24,
+          "unique_count": 15,
+          "min_value": 9.0,
+          "max_value": 26.0,
           "sample_values": [],
           "high_cardinality": false
         }

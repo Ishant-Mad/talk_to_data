@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from app.adapters.base import DataAdapter
 from app.contracts import ChatResponse
-from app.llm.groq_client import GroqClient
+from app.llm.llm_client import get_llm_client
 from app.utils.logger import get_logger
 
 def _tool_schema() -> List[Dict[str, Any]]:
@@ -30,9 +30,11 @@ def _tool_schema() -> List[Dict[str, Any]]:
 def _system_prompt() -> str:
     return (
         "You are a data analyst agent. Use the execute_sql tool to compute numbers using DuckDB SQL. "
-        "Never fabricate values. Return only valid JSON with keys: summary, data_source, chart, confidence. "
-        "chart must include: type (line|bar|table), data (array of objects), and either xKey/yKey or series. "
-        "series is an array of {key, label, color}. "
+        "Never fabricate values. Return only valid JSON with exact keys: summary, data_source, chart, confidence. Do not include any extra properties. "
+        "For 'data_source', use EXACTLY the table name you queried (e.g. 'transactions', 'customers'). "
+        "Confidence MUST be one of 'high', 'medium', or 'low'. "
+        "chart MUST include exactly these keys: type (line|bar|table), data (array of objects), and ideally xKey and yKey representing the dimensions or measures used. "
+        "series is an optional array of objects with keys {key, label, color} only. Do not include extra fields. "
         "Use only tables and columns present in the schema context."
     )
 
@@ -60,7 +62,7 @@ def _parse_response(content: str) -> Optional[Dict[str, Any]]:
 
 def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Dict[str, Any]:
     logger = get_logger("talk_to_data.agent")
-    client = GroqClient()
+    client = get_llm_client()
     messages: List[Dict[str, Any]] = [
         {"role": "system", "content": _system_prompt()},
         {"role": "system", "content": _schema_context(schema)},
@@ -84,7 +86,8 @@ def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Di
         if direct:
             try:
                 response_model = ChatResponse.model_validate(direct)
-            except Exception:
+            except Exception as e:
+                logger.error(f"agent_response_invalid_schema: {str(e)}")
                 logger.warning("agent_direct_response_invalid_schema")
             else:
                 logger.info("agent_direct_response_valid confidence=%s", response_model.confidence)
@@ -120,6 +123,11 @@ def run_agent(adapter: DataAdapter, question: str, schema: Dict[str, Any]) -> Di
             try:
                 response_model = ChatResponse.model_validate(parsed)
                 return response_model.model_dump()
-            except Exception:
+            except Exception as e:
+                logger.error(f"agent_response_invalid_schema: {str(e)}")
                 logger.warning("agent_response_invalid_schema")
-    return {"summary": "Unable to process the query.", "data_source": "", "chart": {"type": "table", "data": []}, "confidence": 0}
+                messages.append({
+                    "role": "user",
+                    "content": f"Your JSON response failed schema validation: {str(e)}. Please correct it and strictly follow the JSON keys and types."
+                })
+    return {"summary": "Unable to process the query.", "data_source": "", "chart": {"type": "table", "data": []}, "confidence": "low"}

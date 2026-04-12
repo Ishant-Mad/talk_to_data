@@ -22,7 +22,7 @@ from app.utils.fingerprint import compute_dataset_fingerprint
 
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-load_dotenv(os.path.join(REPO_ROOT, ".env"))
+load_dotenv(os.path.join(REPO_ROOT, ".env"), override=True)
 DATA_DIR = os.path.join(REPO_ROOT, "data")
 PROFILE_PATH = os.path.join(REPO_ROOT, "data", "data_profile.json")
 
@@ -33,8 +33,8 @@ logger = get_logger("talk_to_data.api")
 frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_origin],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -153,7 +153,7 @@ async def upload(files: List[UploadFile]) -> Dict[str, object]:
             content = await file.read()
             handle.write(content)
 
-    adapter.reset_cache()
+    adapter._init_duckdb_views()
 
     if os.path.exists(PROFILE_PATH):
         os.remove(PROFILE_PATH)
@@ -182,26 +182,63 @@ def dashboard_plan() -> Dict[str, object]:
         plan = propose_chart_plan(schema)
         charts = []
         for item in plan.charts:
+            date_range_val = item.query.date_range
+            if hasattr(date_range_val, "model_dump"):
+                date_range_val = date_range_val.model_dump()
+            elif hasattr(date_range_val, "dict"):
+                date_range_val = date_range_val.dict()
+
             rows = aggregate(
                 adapter,
                 table=item.query.table,
                 metric=item.query.metric,
                 group_by=item.query.group_by,
                 operation=item.query.operation,
-                date_range=item.query.date_range.model_dump() if item.query.date_range else None,
+                date_range=date_range_val,
             )
             chart = item.chart.model_copy()
-            chart.data = rows[: item.query.limit]
+            limit = item.query.limit if getattr(item.query, "limit", None) else 24
+            chart.data = rows[:limit]
+            
+            # Force the chart keys to match what our aggregate() returns
+            if item.query.group_by:
+                chart.xKey = item.query.group_by[0] if isinstance(item.query.group_by, list) else str(item.query.group_by)
+            chart.yKey = "value"
+
             charts.append({
                 "title": item.title,
                 "description": item.description,
                 "chart": chart.model_dump(),
+                "query": item.query.model_dump(),
+                "valid_combinations": [vc.model_dump() for vc in getattr(item, "valid_combinations", [])],
             })
         return {"charts": charts}
     except Exception:  # noqa: BLE001
         logger.exception("dashboard_plan_failed")
         return {"charts": []}
 
+from pydantic import BaseModel
+class WidgetDataRequest(BaseModel):
+    table: str
+    x: str
+    y: str
+    operation: str
+
+@app.post("/dashboard/widget_data")
+def dashboard_widget_data(req: WidgetDataRequest) -> Dict[str, object]:
+    try:
+        rows = aggregate(
+            adapter,
+            table=req.table,
+            metric=req.y,
+            group_by=req.x,
+            operation=req.operation,
+            date_range=None,
+        )
+        return {"data": rows[:24]}
+    except Exception:
+        logger.exception("widget_data_failed")
+        return {"data": []}
 
 @app.post("/chat")
 def chat(payload: Dict[str, object]) -> Dict[str, object]:
@@ -220,6 +257,13 @@ def chat(payload: Dict[str, object]) -> Dict[str, object]:
         return ChatResponse.model_validate(response).model_dump()
     except Exception as exc:  # noqa: BLE001
         logger.exception("chat_request_failed")
+        if "429" in str(exc) or "Too Many Requests" in str(exc):
+            return {
+                "summary": "The AI data agent is currently experiencing high traffic and is rate-limited. Please wait a few moments and try your query again.",
+                "data_source": "system",
+                "chart": {"type": "table", "data": []},
+                "confidence": "low",
+            }
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from collections import defaultdict
 from datetime import datetime
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
@@ -72,8 +73,12 @@ def _scan_csv(
     unique_sets: Dict[str, set] = defaultdict(set)
     inferred_types: Dict[str, str] = {}
 
-    chunk_iter = pd.read_csv(file_path, chunksize=10000)
+    # For demo purposes, we make chunks smaller to trigger more progress events
+    chunk_iter = pd.read_csv(file_path, chunksize=2000)
     for chunk_index, chunk in enumerate(chunk_iter, start=1):
+        if progress is not None:
+            time.sleep(0.4)  # Add artificial delay to make the UI animation noticeable
+            
         total_rows += len(chunk)
         if chunk_index == 1:
             for col in chunk.columns:
@@ -111,7 +116,7 @@ def _scan_csv(
                 **progress_meta,
                 "rows_scanned": total_rows,
                 "chunk": chunk_index,
-                "status": "scanning",
+                "status": "scanning rows",
                 "feature": feature_name,
                 "samples": feature_samples,
             })
@@ -133,6 +138,17 @@ def _scan_csv(
             sample_values=sample_values[col],
             high_cardinality=high_cardinality[col],
         )
+
+    if progress is not None:
+        for col_profile in columns.values():
+            progress({
+                **progress_meta,
+                "rows_scanned": total_rows,
+                "status": "indexing features",
+                "feature": col_profile.name,
+                "samples": col_profile.sample_values[:6] if col_profile.sample_values else [],
+            })
+            time.sleep(0.1)
 
     inferred_time_column = None
     date_candidates = [c for c in columns.values() if c.inferred_type == "date"]
@@ -177,6 +193,7 @@ def profile_dataset(
 
     for file_path in sorted(csv_files):
         if progress is not None:
+            time.sleep(1.0) # Pause between scanning datasets for dramatic effect
             progress({
                 "table": os.path.splitext(os.path.basename(file_path))[0],
                 "file": os.path.basename(file_path),
@@ -187,6 +204,7 @@ def profile_dataset(
         tables[table_profile.name] = table_profile
 
         if progress is not None:
+            time.sleep(1.0) # Pause after dataset profile finishes
             progress({
                 **progress_meta,
                 "rows_scanned": table_profile.row_count,
