@@ -6,7 +6,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://talk-to-data-frontend-dhcc.onrender.com/)
 
-**Ask questions. Get answers. No SQL required.**
+**Ask questions. Get answers.**
  
 An intelligent analytics platform that turns natural language into insights, charts, and dashboards — powered by LLMs and in-memory SQL. Built for business analysts, ops teams, and anyone who needs answers from data without writing code.
  
