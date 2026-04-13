@@ -1,3 +1,5 @@
+
+
 <div align="center">
  
 <!-- Replace with your actual logo -->
@@ -11,7 +13,7 @@
  
 An intelligent analytics platform that turns natural language into insights, charts, and dashboards — powered by LLMs and in-memory SQL. Built for business analysts, ops teams, and anyone who needs answers from data without writing code.
  
-<video src="https://github.com/user-attachments/assets/23112d7d-2459-4d4c-9612-b29acbab0437" width="750" controls="controls" muted="muted" autoplay="autoplay" loop="loop"></video>
+<video src="https://github.com/user-attachments/assets/8c261895-e9d9-49cd-ad82-98a9751f1c03" width="750" controls="controls" muted="muted" autoplay="autoplay" loop="loop"></video>
  
 <br/>
 
