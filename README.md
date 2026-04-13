@@ -11,9 +11,7 @@
  
 An intelligent analytics platform that turns natural language into insights, charts, and dashboards — powered by LLMs and in-memory SQL. Built for business analysts, ops teams, and anyone who needs answers from data without writing code.
  
-<!-- Replace with your demo GIF -->
-<img src="docs/demo.gif" alt="Product demo" width="680" />
-<img width="750" alt="image" src="https://github.com/user-attachments/assets/28b5d5cf-f7af-44af-83b9-13ffd4e8b438" />
+<video src="https://github.com/user-attachments/assets/23112d7d-2459-4d4c-9612-b29acbab0437" width="750" controls="controls" muted="muted" autoplay="autoplay" loop="loop"></video>
  
 <br/>
 
