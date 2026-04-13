@@ -2,8 +2,7 @@
 
 <div align="center">
  
-<!-- Replace with your actual logo -->
-<img src="docs/logo.png" alt="Talk to Data" width="72" height="72" />
+ <img width="300" height="189" alt="logo1" src="https://github.com/user-attachments/assets/a1c11586-907c-477b-9e90-ccb77abbc986" />
  
 # Talk to Data
 
