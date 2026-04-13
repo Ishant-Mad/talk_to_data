@@ -2,7 +2,7 @@
 
 <div align="center">
  
- <img width="300" height="189" alt="logo1" src="https://github.com/user-attachments/assets/a1c11586-907c-477b-9e90-ccb77abbc986" />
+<img width="300" height="155" alt="final" src="https://github.com/user-attachments/assets/31eb4961-ca78-489e-8982-3614151d39ab" />
  
 # Talk to Data
 
