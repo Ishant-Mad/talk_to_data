@@ -1,9 +1,7 @@
-
-
 <div align="center">
  
-<img width="300" height="155" alt="final" src="https://github.com/user-attachments/assets/31eb4961-ca78-489e-8982-3614151d39ab" />
- 
+<img width="300" alt="Untitled design (2)" src="https://github.com/user-attachments/assets/4e5257fa-0526-4ac7-a6cc-ced82941d371" />
+
 # Talk to Data
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-try%20it%20now-brightgreen?style=for-the-badge)](https://talk-to-data-frontend-dhcc.onrender.com/)
