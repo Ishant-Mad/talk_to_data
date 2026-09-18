@@ -6,6 +6,24 @@ import time
 from typing import Any, Dict, List, Optional, Protocol
 
 import requests
+from dotenv import load_dotenv
+
+
+def _resolve_env_var(name: str) -> Optional[str]:
+    val = os.getenv(name)
+    if not val:
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        for path in [
+            os.path.join(repo_root, ".env"),
+            os.path.join(repo_root, "backend", ".env"),
+            ".env",
+        ]:
+            if os.path.exists(path):
+                load_dotenv(path, override=True)
+                val = os.getenv(name)
+                if val:
+                    break
+    return val
 
 
 class LLMClient(Protocol):
@@ -23,7 +41,11 @@ class KeyRotator:
     _instances: Dict[str, "KeyRotator"] = {}
 
     def __new__(cls, keys_str: Optional[str]) -> "KeyRotator":
-        keys_str = keys_str or ""
+        keys_str = (keys_str or "").strip()
+        if not keys_str:
+            instance = super(KeyRotator, cls).__new__(cls)
+            instance._init("")
+            return instance
         if keys_str not in cls._instances:
             instance = super(KeyRotator, cls).__new__(cls)
             instance._init(keys_str)
@@ -122,10 +144,10 @@ def _post_with_retry(
 
 class GroqClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
-        keys_str = api_key or os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY")
+        keys_str = api_key or _resolve_env_var("GROQ_API_KEYS") or _resolve_env_var("GROQ_API_KEY")
         self._rotator = KeyRotator(keys_str)
-        self._base_url = (os.getenv("GROQ_API_BASE") or "https://api.groq.com/openai/v1").strip().rstrip("/")
-        self._model = (os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile").strip()
+        self._base_url = (_resolve_env_var("GROQ_API_BASE") or "https://api.groq.com/openai/v1").strip().rstrip("/")
+        self._model = (_resolve_env_var("GROQ_MODEL") or "openai/gpt-oss-120b").strip()
 
     def chat(
         self,
@@ -217,7 +239,7 @@ class OpenRouterClient:
 
 
 def get_llm_client() -> LLMClient:
-    provider = (os.getenv("LLM_PROVIDER") or "groq").strip().lower()
+    provider = (_resolve_env_var("LLM_PROVIDER") or "groq").strip().lower()
     if provider == "github":
         return GithubClient()
     elif provider == "openrouter":
