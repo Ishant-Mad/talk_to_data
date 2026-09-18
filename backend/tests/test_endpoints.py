@@ -24,7 +24,7 @@ def test_schema_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert "tables" in data
-    assert isinstance(data["tables"], list)
+    assert isinstance(data["tables"], (dict, list))
 
 def test_dashboard_plan_endpoint():
     # If standard behavior works

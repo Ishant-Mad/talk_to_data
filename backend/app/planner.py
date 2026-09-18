@@ -6,6 +6,9 @@ from typing import Any, Dict, List
 
 from app.contracts import ChartPlanItem, ChartPlanResponse, ChartQuery, ChartSpec
 from app.llm.llm_client import get_llm_client
+from app.utils.logger import get_logger
+
+logger = get_logger("talk_to_data.planner")
 
 
 def _schema_context(schema: Dict[str, Any]) -> str:
@@ -51,16 +54,15 @@ def propose_chart_plan(schema: Dict[str, Any]) -> ChartPlanResponse:
         },
     ]
 
-    responses = []
     try:
         response = client.chat(messages=messages, temperature=0.2)
         raw_content = response["choices"][0]["message"].get("content")
         content = (raw_content or "{}").strip()
-        print("LLM RESPONSE:", content)
+        logger.debug("planner_llm_response length=%s", len(content))
         parsed = _try_parse_json(content)
         
         fallback_plan = _fallback_plan(schema)
-        
+
         if parsed is not None:
             try:
                 llm_response = ChartPlanResponse.model_validate(parsed)
@@ -80,11 +82,9 @@ def propose_chart_plan(schema: Dict[str, Any]) -> ChartPlanResponse:
                                 break
                 return llm_response
             except Exception as e:
-                print(f"Validation error: {e}")
-                pass
+                logger.warning("planner_validation_error error=%s", e)
     except Exception as e:
-        print(f"LLM Error: {e}")
-        pass
+        logger.warning("planner_llm_error error=%s", e)
 
     return _fallback_plan(schema)
 

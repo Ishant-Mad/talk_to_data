@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Protocol
 import requests
 
 
-
 class LLMClient(Protocol):
     def chat(
         self,
@@ -19,10 +18,11 @@ class LLMClient(Protocol):
     ) -> Dict[str, Any]:
         ...
 
-class KeyRotator:
-    _instances: Dict[str, 'KeyRotator'] = {}
 
-    def __new__(cls, keys_str: Optional[str]) -> 'KeyRotator':
+class KeyRotator:
+    _instances: Dict[str, "KeyRotator"] = {}
+
+    def __new__(cls, keys_str: Optional[str]) -> "KeyRotator":
         keys_str = keys_str or ""
         if keys_str not in cls._instances:
             instance = super(KeyRotator, cls).__new__(cls)
@@ -31,7 +31,8 @@ class KeyRotator:
         return cls._instances[keys_str]
 
     def _init(self, keys_str: str) -> None:
-        self.keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        raw_keys = keys_str.replace("\n", ",").replace("\r", "").split(",")
+        self.keys = [k.strip().strip('"').strip("'") for k in raw_keys if k.strip().strip('"').strip("'")]
         self._index = 0
 
     def get_key(self) -> str:
@@ -42,21 +43,89 @@ class KeyRotator:
         return key
 
 
+def _post_with_retry(
+    url: str,
+    payload: Dict[str, Any],
+    rotator: KeyRotator,
+    auth_error_message: str,
+    timeout: int = 60,
+) -> Dict[str, Any]:
+    """POST to `url` with key rotation and exponential-ish back-off on 429.
+
+    Raises an ``HTTPError`` (or ``RuntimeError`` for missing keys) after all
+    retry attempts are exhausted, ensuring the caller always receives an
+    exception rather than silently falling off the end of the loop.
+    """
+    if not rotator.keys:
+        raise RuntimeError(auth_error_message)
+
+    max_attempts = max(2, len(rotator.keys))
+    last_response: Optional[requests.Response] = None
+
+    for attempt in range(max_attempts):
+        current_key = rotator.get_key()
+        headers = {
+            "Authorization": f"Bearer {current_key}",
+            "Content-Type": "application/json",
+        }
+        response = requests.post(
+            url,
+            headers=headers,
+            data=json.dumps(payload),
+            timeout=timeout,
+        )
+        last_response = response
+
+        if response.status_code == 429 and attempt < max_attempts - 1:
+            retry_after = response.headers.get("Retry-After")
+            sleep_time = min(float(retry_after) if retry_after else 1.0, 4.0)
+            time.sleep(sleep_time)
+            continue
+
+        if response.status_code == 400:
+            try:
+                err_data = response.json()
+                err_obj = err_data.get("error", {})
+                failed_gen = err_obj.get("failed_generation")
+                if failed_gen:
+                    try:
+                        parsed_gen = json.loads(failed_gen)
+                        if isinstance(parsed_gen, dict) and "arguments" in parsed_gen:
+                            args_val = parsed_gen["arguments"]
+                            content = json.dumps(args_val) if isinstance(args_val, (dict, list)) else str(args_val)
+                        else:
+                            content = failed_gen
+                    except Exception:
+                        content = failed_gen
+                    return {
+                        "choices": [{
+                            "message": {
+                                "role": "assistant",
+                                "content": content
+                            },
+                            "finish_reason": "stop"
+                        }]
+                    }
+            except Exception:
+                pass
+
+        # On the final attempt, or on any non-retryable status, raise/return
+        response.raise_for_status()
+        return response.json()
+
+    # This line is only reached if every attempt ended with a `continue` that
+    # exhausted all retries — raise on the last response to surface the error.
+    assert last_response is not None  # guaranteed since max_attempts >= 2
+    last_response.raise_for_status()
+    raise RuntimeError("Exhausted all retry attempts without a successful response")
+
 
 class GroqClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
         keys_str = api_key or os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY")
         self._rotator = KeyRotator(keys_str)
-        self._base_url = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
-        self._model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-
-    def _headers(self, current_key: str) -> Dict[str, str]:
-        if not current_key:
-            raise RuntimeError("GROQ_API_KEY is not configured.")
-        return {
-            "Authorization": f"Bearer {current_key}",
-            "Content-Type": "application/json",
-        }
+        self._base_url = (os.getenv("GROQ_API_BASE") or "https://api.groq.com/openai/v1").strip().rstrip("/")
+        self._model = (os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile").strip()
 
     def chat(
         self,
@@ -75,39 +144,20 @@ class GroqClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        max_attempts = max(2, len(self._rotator.keys))
-        for attempt in range(max_attempts):
-            current_key = self._rotator.get_key()
-            response = requests.post(
-                f"{self._base_url}/chat/completions",
-                headers=self._headers(current_key),
-                data=json.dumps(payload),
-                timeout=30,
-            )
-            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
-                if response.status_code == 429:
-                    retry_after = response.headers.get("Retry-After")
-                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                    time.sleep(sleep_time)
-                continue
-            
-            response.raise_for_status()
-            return response.json()
+        return _post_with_retry(
+            url=f"{self._base_url}/chat/completions",
+            payload=payload,
+            rotator=self._rotator,
+            auth_error_message="GROQ_API_KEY is not configured.",
+        )
+
 
 class GithubClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
         keys_str = api_key or os.getenv("GITHUB_TOKENS") or os.getenv("GITHUB_TOKEN")
         self._rotator = KeyRotator(keys_str)
-        self._base_url = os.getenv("GITHUB_API_BASE", "https://models.inference.ai.azure.com")
-        self._model = os.getenv("GITHUB_MODEL", "Ministral-3B")
-
-    def _headers(self, current_key: str) -> Dict[str, str]:
-        if not current_key:
-            raise RuntimeError("GITHUB_TOKEN is not configured for GithubClient.")
-        return {
-            "Authorization": f"Bearer {current_key}",
-            "Content-Type": "application/json",
-        }
+        self._base_url = (os.getenv("GITHUB_API_BASE") or "https://models.inference.ai.azure.com").strip().rstrip("/")
+        self._model = (os.getenv("GITHUB_MODEL") or "Ministral-3B").strip()
 
     def chat(
         self,
@@ -126,39 +176,20 @@ class GithubClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        max_attempts = max(2, len(self._rotator.keys))
-        for attempt in range(max_attempts):
-            current_key = self._rotator.get_key()
-            response = requests.post(
-                f"{self._base_url}/chat/completions",
-                headers=self._headers(current_key),
-                data=json.dumps(payload),
-                timeout=30,
-            )
-            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
-                if response.status_code == 429:
-                    retry_after = response.headers.get("Retry-After")
-                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                    time.sleep(sleep_time)
-                continue
-            
-            response.raise_for_status()
-            return response.json()
+        return _post_with_retry(
+            url=f"{self._base_url}/chat/completions",
+            payload=payload,
+            rotator=self._rotator,
+            auth_error_message="GITHUB_TOKEN is not configured for GithubClient.",
+        )
+
 
 class OpenRouterClient:
     def __init__(self, api_key: Optional[str] = None) -> None:
         keys_str = api_key or os.getenv("OPENROUTER_API_KEYS") or os.getenv("OPENROUTER_API_KEY")
         self._rotator = KeyRotator(keys_str)
-        self._base_url = os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1")
-        self._model = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct")
-
-    def _headers(self, current_key: str) -> Dict[str, str]:
-        if not current_key:
-            raise RuntimeError("OPENROUTER_API_KEY is not configured for OpenRouterClient.")
-        return {
-            "Authorization": f"Bearer {current_key}",
-            "Content-Type": "application/json",
-        }
+        self._base_url = (os.getenv("OPENROUTER_API_BASE") or "https://openrouter.ai/api/v1").strip().rstrip("/")
+        self._model = (os.getenv("OPENROUTER_MODEL") or "meta-llama/llama-3.3-70b-instruct").strip()
 
     def chat(
         self,
@@ -177,31 +208,18 @@ class OpenRouterClient:
         if tool_choice:
             payload["tool_choice"] = tool_choice
 
-        max_attempts = max(2, len(self._rotator.keys))
-        for attempt in range(max_attempts):
-            current_key = self._rotator.get_key()
-            response = requests.post(
-                f"{self._base_url}/chat/completions",
-                headers=self._headers(current_key),
-                data=json.dumps(payload),
-                timeout=30,
-            )
-            if response.status_code in (401, 403, 429) and attempt < max_attempts - 1:
-                if response.status_code == 429:
-                    retry_after = response.headers.get("Retry-After")
-                    sleep_time = min(float(retry_after) if retry_after else 1.0, 2.0)
-                    time.sleep(sleep_time)
-                continue
-            
-            response.raise_for_status()
-            return response.json()
+        return _post_with_retry(
+            url=f"{self._base_url}/chat/completions",
+            payload=payload,
+            rotator=self._rotator,
+            auth_error_message="OPENROUTER_API_KEY is not configured for OpenRouterClient.",
+        )
 
 
 def get_llm_client() -> LLMClient:
-    provider = os.getenv("LLM_PROVIDER", "groq").lower()
+    provider = (os.getenv("LLM_PROVIDER") or "groq").strip().lower()
     if provider == "github":
         return GithubClient()
     elif provider == "openrouter":
         return OpenRouterClient()
     return GroqClient()
-

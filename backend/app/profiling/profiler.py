@@ -28,15 +28,18 @@ def _detect_date_column(series: pd.Series) -> float:
 
 
 def _infer_column_type(name: str, series: pd.Series) -> str:
-    lowered = name.lower()
-    if "date" in lowered or "time" in lowered:
-        return "date"
-
+    # Check numeric dtype FIRST — a column named "response_time_seconds" that is
+    # numeric should be classified as "numeric", not "date".
     if pd.api.types.is_bool_dtype(series):
         return "boolean"
 
     if pd.api.types.is_numeric_dtype(series):
         return "numeric"
+
+    # Only after ruling out numeric, apply the name-based date heuristic
+    lowered = name.lower()
+    if "date" in lowered or "time" in lowered:
+        return "date"
 
     date_parse_ratio = _detect_date_column(series)
     if date_parse_ratio > 0.9:
@@ -223,7 +226,9 @@ def profile_dataset(
 
 
 def _persist_profile(profile: DatasetProfile, output_path: str) -> None:
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    dir_name = os.path.dirname(output_path)
+    if dir_name:
+        os.makedirs(dir_name, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as handle:
         json.dump(_profile_to_dict(profile), handle, indent=2)
 

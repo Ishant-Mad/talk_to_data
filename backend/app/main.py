@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from app.adapters.csv_adapter import CSVAdapter
 from app.contracts import ChatResponse
@@ -89,11 +90,14 @@ def _run_profiling() -> None:
 
 
 def _ensure_profiling() -> None:
-    if profiling_state.status in {"running", "done"}:
-        return
-    if not _should_profile():
-        profiling_state.status = "done"
-        return
+    """Start profiling in a background thread if needed — thread-safe."""
+    with profiling_state.lock:
+        if profiling_state.status in {"running", "done"}:
+            return
+        if not _should_profile():
+            profiling_state.status = "done"
+            return
+        profiling_state.status = "running"
     thread = threading.Thread(target=_run_profiling, daemon=True)
     thread.start()
 
@@ -128,6 +132,14 @@ def _event_stream() -> Generator[str, None, None]:
 
 @app.on_event("startup")
 def startup_event() -> None:
+    data_source_dir = os.path.join(REPO_ROOT, "data2")
+    if os.path.exists(data_source_dir):
+        os.makedirs(DATA_DIR, exist_ok=True)
+        csv_files = [f for f in os.listdir(DATA_DIR) if f.endswith(".csv")]
+        if not csv_files and os.path.exists(os.path.join(data_source_dir, "business_data.csv")):
+            import shutil
+            shutil.copy2(os.path.join(data_source_dir, "business_data.csv"), os.path.join(DATA_DIR, "business_data.csv"))
+            adapter._init_duckdb_views()
     _ensure_profiling()
 
 
@@ -211,34 +223,38 @@ async def upload(files: List[UploadFile]) -> Dict[str, object]:
     if os.path.exists(PROFILE_PATH):
         os.remove(PROFILE_PATH)
 
-    profiling_state.status = "idle"
-    profiling_state.error = None
-    profiling_state.events.clear()
+    with profiling_state.lock:
+        profiling_state.status = "idle"
+        profiling_state.error = None
+        profiling_state.events.clear()
     return {"status": "uploaded", "files": [file.filename for file in files]}
 
 
 @app.get("/upload/demo")
 def upload_demo(dataset: str) -> Dict[str, object]:
     import shutil
-    DATA_SOURCE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data2")
+    DATA_SOURCE = os.path.join(REPO_ROOT, "data2")
     
     if not os.path.exists(DATA_SOURCE):
         raise HTTPException(status_code=400, detail="data2 folder not found")
     
-    if dataset not in ("single", "multiple"):
-        raise HTTPException(status_code=400, detail="dataset must be 'single' or 'multiple'")
+    norm_dataset = dataset.lower().strip()
+    if norm_dataset in ("single", "single_table"):
+        files_to_copy = ["business_data.csv"]
+    elif norm_dataset in ("multi", "multiple", "multi_table"):
+        files_to_copy = [f for f in os.listdir(DATA_SOURCE) if f.endswith(".csv") and f != "business_data.csv"]
+    else:
+        raise HTTPException(status_code=400, detail="dataset must be 'single' or 'multi'")
         
     os.makedirs(DATA_DIR, exist_ok=True)
     for filename in os.listdir(DATA_DIR):
         file_path = os.path.join(DATA_DIR, filename)
         if os.path.isfile(file_path):
-            os.remove(file_path)
-    
-    if dataset == "single":
-        files_to_copy = ["business_data.csv"]
-    else:
-        files_to_copy = [f for f in os.listdir(DATA_SOURCE) if f.endswith(".csv") and f != "business_data.csv"]
-        
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+
     copied_files = []
     for filename in files_to_copy:
         src_path = os.path.join(DATA_SOURCE, filename)
@@ -251,13 +267,14 @@ def upload_demo(dataset: str) -> Dict[str, object]:
         raise HTTPException(status_code=400, detail=f"No demo files found in {DATA_SOURCE}.")
         
     adapter._init_duckdb_views()
-    
+
     if os.path.exists(PROFILE_PATH):
         os.remove(PROFILE_PATH)
-        
-    profiling_state.status = "idle"
-    profiling_state.error = None
-    profiling_state.events.clear()
+
+    with profiling_state.lock:
+        profiling_state.status = "idle"
+        profiling_state.error = None
+        profiling_state.events.clear()
     adapter.reset_cache()
     
     return {
@@ -271,9 +288,10 @@ def upload_demo(dataset: str) -> Dict[str, object]:
 def profiling_reset() -> Dict[str, str]:
     if os.path.exists(PROFILE_PATH):
         os.remove(PROFILE_PATH)
-    profiling_state.status = "idle"
-    profiling_state.error = None
-    profiling_state.events.clear()
+    with profiling_state.lock:
+        profiling_state.status = "idle"
+        profiling_state.error = None
+        profiling_state.events.clear()
     adapter.reset_cache()
     return {"status": "reset"}
 
@@ -320,7 +338,8 @@ def dashboard_plan() -> Dict[str, object]:
         logger.exception("dashboard_plan_failed")
         return {"charts": []}
 
-from pydantic import BaseModel
+
+
 class WidgetDataRequest(BaseModel):
     table: str
     x: str
@@ -348,12 +367,7 @@ def chat(payload: Dict[str, object]) -> Dict[str, object]:
     question = str(payload.get("question", "")).strip()
     logger.info("chat_request length=%s", len(question))
     if not question:
-        return {
-            "summary": "Please ask a question.",
-            "data_source": "",
-            "chart": {"type": "table", "data": []},
-            "confidence": "low",
-        }
+        raise HTTPException(status_code=400, detail="Question is required.")
     try:
         schema = adapter.schema()
         response = run_agent(adapter, question, schema)

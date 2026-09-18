@@ -22,8 +22,8 @@ fi
 # Use port 8000 locally, or Render's provided PORT
 PORT="${PORT:-8000}"
 
-# Start backend server in the background
-python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT &
+# Start backend server in the background with auto-reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --reload &
 BACKEND_PID=$!
 
 cd ..
