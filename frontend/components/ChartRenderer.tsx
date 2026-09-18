@@ -131,10 +131,10 @@ export function ChartRenderer({
                 <th
                   key={col}
                   style={{
-                    padding: "8px 12px",
+                    padding: "10px 14px",
                     textAlign: "left",
-                    fontWeight: 600,
-                    color: "var(--text-secondary)",
+                    fontWeight: 650,
+                    color: "var(--text-primary)",
                     fontFamily: "var(--font-mono)",
                   }}
                 >
@@ -156,9 +156,9 @@ export function ChartRenderer({
                   <td
                     key={col}
                     style={{
-                      padding: "8px 12px",
+                      padding: "10px 14px",
                       color: row.highlight ? "var(--accent-coral)" : "var(--text-primary)",
-                      fontWeight: row.highlight ? 600 : 400,
+                      fontWeight: row.highlight ? 700 : 500,
                     }}
                   >
                     {typeof row[col] === "number" ? row[col].toLocaleString() : String(row[col] ?? "")}

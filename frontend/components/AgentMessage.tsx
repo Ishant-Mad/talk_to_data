@@ -41,8 +41,9 @@ export function AgentMessage({ message }: { message: ChatMessage }) {
             border: "1px solid var(--border-subtle)",
             borderRadius: "var(--radius-lg) var(--radius-lg) var(--radius-xs) var(--radius-lg)",
             color: "var(--text-primary)",
-            fontSize: "0.95rem",
-            lineHeight: 1.5,
+            fontSize: "0.96rem",
+            fontWeight: 500,
+            lineHeight: 1.55,
             boxShadow: "var(--shadow-xs)",
           }}
         >
@@ -244,7 +245,7 @@ export function AgentMessage({ message }: { message: ChatMessage }) {
       {/* Sub-analyses Cards */}
       {data.analyses && data.analyses.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
-          <div style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+          <div style={{ fontWeight: 650, fontSize: "0.88rem", color: "var(--text-primary)" }}>
             Detailed Insights & Driver Decomposition:
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "12px" }}>
@@ -264,11 +265,11 @@ export function AgentMessage({ message }: { message: ChatMessage }) {
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span
                     style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.04em",
-                      padding: "2px 7px",
+                      padding: "2px 8px",
                       borderRadius: "var(--radius-full)",
                       background: "var(--bg-surface)",
                       color: "var(--accent-coral)",
@@ -278,7 +279,7 @@ export function AgentMessage({ message }: { message: ChatMessage }) {
                     {item.type}
                   </span>
                 </div>
-                <MarkdownView content={item.insight} style={{ fontSize: "0.88rem", lineHeight: 1.5 }} />
+                <MarkdownView content={item.insight} style={{ fontSize: "0.92rem", lineHeight: 1.55 }} />
                 {item.chart && item.chart.data && (
                   <div style={{ marginTop: "6px" }}>
                     <ChartRenderer chart={item.chart} height={160} />

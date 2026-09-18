@@ -51,7 +51,7 @@ export function MarkdownView({ content, style }: MarkdownViewProps) {
       const matchText = match[0];
       if (matchText.startsWith("**") && matchText.endsWith("**")) {
         parts.push(
-          <strong key={`b-${match.index}`} style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+          <strong key={`b-${match.index}`} style={{ fontWeight: 700, color: "var(--text-primary)" }}>
             {matchText.slice(2, -2)}
           </strong>
         );
@@ -62,6 +62,7 @@ export function MarkdownView({ content, style }: MarkdownViewProps) {
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "0.85em",
+              fontWeight: 600,
               padding: "2px 6px",
               borderRadius: "var(--radius-xs)",
               background: "var(--bg-elevated)",
@@ -73,7 +74,7 @@ export function MarkdownView({ content, style }: MarkdownViewProps) {
           </code>
         );
       } else if (matchText.startsWith("*") && matchText.endsWith("*")) {
-        parts.push(<em key={`em-${match.index}`}>{matchText.slice(1, -1)}</em>);
+        parts.push(<em key={`em-${match.index}`} style={{ fontWeight: 550 }}>{matchText.slice(1, -1)}</em>);
       }
 
       lastIndex = regex.lastIndex;
@@ -100,14 +101,14 @@ export function MarkdownView({ content, style }: MarkdownViewProps) {
       inList = true;
       const itemText = trimmed.substring(2);
       currentList.push(
-        <li key={`li-${i}`} style={{ lineHeight: 1.55 }}>
+        <li key={`li-${i}`} style={{ lineHeight: 1.6, fontWeight: 500 }}>
           {renderInline(itemText)}
         </li>
       );
     } else {
       flushList();
       elements.push(
-        <p key={`p-${i}`} style={{ margin: "4px 0", lineHeight: 1.55 }}>
+        <p key={`p-${i}`} style={{ margin: "4px 0", lineHeight: 1.6, fontWeight: 500 }}>
           {renderInline(trimmed)}
         </p>
       );
@@ -116,5 +117,5 @@ export function MarkdownView({ content, style }: MarkdownViewProps) {
 
   flushList();
 
-  return <div style={{ fontSize: "0.95rem", color: "var(--text-primary)", ...style }}>{elements}</div>;
+  return <div style={{ fontSize: "0.96rem", fontWeight: 500, color: "var(--text-primary)", ...style }}>{elements}</div>;
 }

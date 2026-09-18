@@ -34,10 +34,10 @@
   --accent-lavender: #8F7EAA;
   --accent-blue: #4A6984;
 
-  /* Typography Colors */
-  --text-primary: #1E1E1C;
-  --text-secondary: #65645F;
-  --text-muted: #999893;
+  /* Typography Colors - High-legibility Anthropic Palette */
+  --text-primary: #121211;
+  --text-secondary: #3D3C38;
+  --text-muted: #676560;
   --text-inverse: #FAF9F5;
 
   /* Structural Borders & Dividers */
@@ -93,10 +93,10 @@
   --accent-lavender: #A594C0;
   --accent-blue: #6386A4;
 
-  /* Typography Colors */
-  --text-primary: #EDECE8;
-  --text-secondary: #9C9B95;
-  --text-muted: #666560;
+  /* Typography Colors - High-legibility Dark Palette */
+  --text-primary: #FAF9F5;
+  --text-secondary: #C8C6BF;
+  --text-muted: #95938D;
   --text-inverse: #141413;
 
   /* Structural Borders */
@@ -124,10 +124,11 @@ html, body {
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-size: 15.5px;
+  font-weight: 500;
+  line-height: 1.55;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
   text-rendering: optimizeLegibility;
 }
 
@@ -156,7 +157,7 @@ html, body {
 /* Headings with Editorial Serif */
 h1, h2, h3, .font-serif {
   font-family: var(--font-serif);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--text-primary);
 }
@@ -174,10 +175,16 @@ h3 {
   line-height: 1.3;
 }
 
+strong, b {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 /* Code & SQL */
 code, pre, .font-mono {
   font-family: var(--font-mono);
   font-size: 0.88em;
+  font-weight: 500;
 }
 
 /* Global Interactive Micro-interactions (from ui-animation) */
@@ -299,7 +306,7 @@ button:disabled {
   gap: 7px;
   padding: 6px 14px;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 550;
   border-radius: var(--radius-full);
   color: var(--text-secondary);
   transition: all var(--duration-fast) var(--ease-enter);
@@ -308,6 +315,7 @@ button:disabled {
 .ttd-mode-tab.active {
   background: var(--bg-surface);
   color: var(--text-primary);
+  font-weight: 650;
   box-shadow: var(--shadow-xs);
 }
 
@@ -346,6 +354,7 @@ button:disabled {
   outline: none;
   resize: none;
   font-size: 1rem;
+  font-weight: 500;
   line-height: 1.5;
   color: var(--text-primary);
   min-height: 48px;
@@ -353,6 +362,7 @@ button:disabled {
 }
 .ttd-textarea::placeholder {
   color: var(--text-muted);
+  font-weight: 450;
 }
 
 .ttd-composer-actions {
@@ -372,8 +382,9 @@ button:disabled {
   border-radius: var(--radius-full);
   background: var(--accent-coral);
   color: var(--accent-coral-contrast);
-  font-weight: 600;
+  font-weight: 650;
   font-size: 0.88rem;
+  letter-spacing: -0.01em;
   box-shadow: 0 2px 8px rgba(217, 119, 87, 0.3);
   transition: background var(--duration-fast) ease, transform var(--duration-instant) var(--ease-enter);
 }
@@ -395,6 +406,7 @@ button:disabled {
   gap: 6px;
   padding: 6px 13px;
   font-size: 0.84rem;
+  font-weight: 550;
   border-radius: var(--radius-full);
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
